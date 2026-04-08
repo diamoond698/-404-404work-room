@@ -1,0 +1,748 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* 导航栏 */
+.navbar {
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 15px 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo h1 {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+}
+
+.nav-links li {
+    margin-left: 30px;
+}
+
+.nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ff6b6b;
+}
+
+.menu-toggle {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Hero部分 */
+.hero {
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 120px 0 80px;
+    margin-top: 70px;
+}
+
+.hero .container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.hero-content {
+    flex: 1;
+    min-width: 300px;
+    margin-bottom: 40px;
+}
+
+.hero-content h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.hero-content p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: 4px solid #000;
+    border-radius: 0;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    box-shadow: 4px 4px 0 #000;
+}
+
+.btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000;
+}
+
+.btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #000;
+}
+
+.primary-btn {
+    background-color: #ff6b6b;
+    color: #fff;
+}
+
+.primary-btn:hover {
+    background-color: #ee5a5a;
+}
+
+.secondary-btn {
+    background-color: transparent;
+    color: #fff;
+    border: 4px solid #fff;
+    box-shadow: 4px 4px 0 #fff;
+}
+
+.secondary-btn:hover {
+    background-color: #fff;
+    color: #1a1a1a;
+    box-shadow: 6px 6px 0 #1a1a1a;
+}
+
+.card-btn {
+    display: block;
+    width: 80%;
+    margin: 0 auto 20px;
+    background-color: #1a1a1a;
+    color: #fff;
+    text-align: center;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000;
+}
+
+.card-btn:hover {
+    background-color: #333;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000;
+}
+
+.hero-image {
+    flex: 1;
+    min-width: 300px;
+}
+
+.hero-image img {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* 游戏展示 */
+.games {
+    padding: 80px 0;
+    background-color: #fff;
+}
+
+.games h2 {
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 60px;
+    color: #1a1a1a;
+}
+
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.game-card {
+    background-color: #f9f9f9;
+    border: 4px solid #000;
+    border-radius: 0;
+    overflow: hidden;
+    box-shadow: 8px 8px 0 #000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.game-card:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 12px 12px 0 #000;
+}
+
+.game-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.game-card h3 {
+    font-size: 20px;
+    margin: 20px;
+    color: #1a1a1a;
+}
+
+.game-card p {
+    margin: 0 20px 20px;
+    color: #666;
+}
+
+.card-btn {
+    display: block;
+    width: 80%;
+    margin: 0 auto 20px;
+    background-color: #1a1a1a;
+    color: #fff;
+    text-align: center;
+}
+
+.card-btn:hover {
+    background-color: #333;
+}
+
+/* 关于我们 */
+.about {
+    padding: 80px 0;
+    background-color: #f5f5f5;
+}
+
+.about .container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.about-content {
+    flex: 1;
+    min-width: 300px;
+    margin-bottom: 40px;
+    padding: 20px;
+    background-color: #fff;
+    border: 4px solid #000;
+    box-shadow: 8px 8px 0 #000;
+}
+
+.about-content h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #1a1a1a;
+    text-shadow: 2px 2px 0 #ff6b6b;
+}
+
+.about-content p {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.about-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000;
+}
+
+.stat-number {
+    display: block;
+    font-size: 36px;
+    font-weight: bold;
+    color: #ff6b6b;
+}
+
+.stat-label {
+    display: block;
+    font-size: 16px;
+    color: #666;
+}
+
+.about-image {
+    flex: 1;
+    min-width: 300px;
+    border: 4px solid #000;
+    box-shadow: 8px 8px 0 #000;
+    overflow: hidden;
+}
+
+.about-image img {
+    width: 100%;
+    border-radius: 0;
+}
+
+/* 美术作品展示 */
+.artwork {
+    padding: 80px 0;
+    background-color: #f5f5f5;
+}
+
+.artwork h2 {
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 60px;
+    color: #1a1a1a;
+    text-shadow: 2px 2px 0 #ff6b6b;
+}
+
+.artwork-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 40px;
+}
+
+.artwork-item {
+    position: relative;
+    border: 4px solid #000;
+    box-shadow: 8px 8px 0 #000;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.artwork-item:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 12px 12px 0 #000;
+}
+
+.artwork-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: pixelated;
+}
+
+.artwork-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 20px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.artwork-item:hover .artwork-overlay {
+    transform: translateY(0);
+}
+
+.artwork-overlay h3 {
+    font-size: 20px;
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 0 #ff6b6b;
+}
+
+.artwork-overlay p {
+    font-size: 14px;
+    color: #ccc;
+}
+
+/* 团队介绍 */
+.team {
+    padding: 80px 0;
+    background-color: #fff;
+}
+
+.team h2 {
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 60px;
+    color: #1a1a1a;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+}
+
+.team-member {
+    text-align: center;
+    padding: 20px;
+    background-color: #fff;
+    border: 4px solid #000;
+    box-shadow: 8px 8px 0 #000;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.team-member:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 12px 12px 0 #000;
+}
+
+.team-member img {
+    width: 120px;
+    height: 120px;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    object-fit: cover;
+    margin-bottom: 20px;
+}
+
+.team-member h3 {
+    font-size: 18px;
+    margin-bottom: 5px;
+    color: #1a1a1a;
+    text-shadow: 1px 1px 0 #ff6b6b;
+}
+
+.team-member p {
+    color: #666;
+}
+
+/* 开发流程 */
+.process {
+    padding: 80px 0;
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+.process h2 {
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.process-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+}
+
+.step {
+    text-align: center;
+    padding: 20px;
+    background-color: #2a2a2a;
+    border: 4px solid #fff;
+    box-shadow: 8px 8px 0 #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.step:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 12px 12px 0 #fff;
+}
+
+.step-number {
+    display: inline-block;
+    width: 60px;
+    height: 60px;
+    border: 4px solid #fff;
+    background-color: #ff6b6b;
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 52px;
+    margin-bottom: 20px;
+    box-shadow: 4px 4px 0 #fff;
+}
+
+.step h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 0 #ff6b6b;
+}
+
+.step p {
+    color: #ccc;
+}
+
+/* 联系我们 */
+.contact {
+    padding: 80px 0;
+    background-color: #f5f5f5;
+}
+
+.contact h2 {
+    font-size: 36px;
+    text-align: center;
+    margin-bottom: 60px;
+    color: #1a1a1a;
+}
+
+.contact-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 300px;
+    background-color: #fff;
+    padding: 30px;
+    border: 4px solid #000;
+    box-shadow: 8px 8px 0 #000;
+}
+
+.contact-info p {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+.contact-info i {
+    margin-right: 10px;
+    color: #ff6b6b;
+}
+
+.social-links {
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+}
+
+.social-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border: 4px solid #000;
+    background-color: #1a1a1a;
+    color: #fff;
+    transition: all 0.2s ease;
+    box-shadow: 4px 4px 0 #000;
+}
+
+.social-links a:hover {
+    background-color: #ff6b6b;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000;
+}
+
+.contact-form {
+    flex: 1;
+    min-width: 300px;
+    background-color: #fff;
+    padding: 30px;
+    border: 4px solid #000;
+    box-shadow: 8px 8px 0 #000;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 4px solid #000;
+    border-radius: 0;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    box-shadow: 4px 4px 0 #000;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+/* 页脚 */
+.footer {
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 60px 0 30px;
+    border-top: 4px solid #000;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.footer-logo h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 0 #ff6b6b;
+}
+
+.footer-logo p {
+    color: #ccc;
+}
+
+.footer-links h3,
+.footer-info h3 {
+    font-size: 18px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #ff6b6b;
+}
+
+.footer-links ul {
+    list-style: none;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    color: #ccc;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.footer-links a:hover {
+    color: #ff6b6b;
+    padding-left: 10px;
+}
+
+.footer-info p {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.footer-info i {
+    margin-right: 10px;
+    color: #ff6b6b;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 30px;
+    border-top: 4px solid #333;
+    color: #ccc;
+    font-weight: bold;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+
+    .nav-links {
+        position: absolute;
+        top: 70px;
+        left: 0;
+        width: 100%;
+        background-color: #1a1a1a;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 0;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .nav-links.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .nav-links li {
+        margin: 10px 0;
+    }
+
+    .hero-content h1 {
+        font-size: 36px;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .about-stats {
+        justify-content: center;
+    }
+
+    .process-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-content {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-content h1 {
+        font-size: 28px;
+    }
+
+    .games h2,
+    .about-content h2,
+    .team h2,
+    .process h2,
+    .contact h2 {
+        font-size: 28px;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+    }
+}
