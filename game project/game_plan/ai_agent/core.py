@@ -46,7 +46,7 @@ def get_vectorstore():
     """获取知识库连接"""
     embeddings = LocalEmbeddings()
     vectorstore = Chroma(
-        persist_directory="C:/Users/Lenovo/Desktop/游戏ai agent知识库",
+        persist_directory="knowledge_base",  # 修改为相对路径
         embedding_function=embeddings
     )
     return vectorstore
