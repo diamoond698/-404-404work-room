@@ -1,7 +1,9 @@
 langchain
 langchain-community
+langchain-chroma
 chromadb
 streamlit
 requests
 python-docx
 pypdf
+pyperclip
