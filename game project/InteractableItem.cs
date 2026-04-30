@@ -2,34 +2,17 @@ using UnityEngine;
 
 public class InteractableItem : MonoBehaviour
 {
-    [Header("互动设置")]
-    [SerializeField]
-    private string itemName = "物品";
-    [SerializeField]
-    private KeyCode interactKey = KeyCode.Q;
-    [SerializeField]
-    private float interactRange = 2f;
-    [SerializeField]
-    private bool showIndicator = true;
+    public string itemName;
+    public float interactRange = 2f;
+    public bool oneTimeInteraction = false;
+    public DialogueData dialogueData;
+    public bool showIndicator = true;
+    public Color highlightColor = Color.yellow;
 
-    [Header("剧情设置")]
-    [SerializeField]
-    private DialogueData dialogueData;
-    [SerializeField]
-    private bool oneTimeInteraction = false;
-    [SerializeField]
+    private bool playerInRange = false;
     private bool hasInteracted = false;
-
-    [Header("视觉效果")]
-    [SerializeField]
-    private Sprite indicatorSprite;
-    [SerializeField]
-    private Color highlightColor = Color.yellow;
-
     private SpriteRenderer spriteRenderer;
-    private GameObject indicator;
     private Color originalColor;
-    private bool playerInRange;
 
     private void Start()
     {
@@ -38,8 +21,14 @@ public class InteractableItem : MonoBehaviour
         {
             originalColor = spriteRenderer.color;
         }
+    }
 
-        CreateIndicator();
+    private void Update()
+    {
+        if (playerInRange && Input.GetKeyDown(KeyCode.Q) && !hasInteracted && !DialogueManager.instance.IsDialogueActive())
+        {
+            Interact();
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -47,9 +36,9 @@ public class InteractableItem : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInRange = true;
-            if (InteractionManager.instance != null)
+            if (showIndicator && spriteRenderer != null)
             {
-                InteractionManager.instance.RegisterInteractable(this);
+                spriteRenderer.color = highlightColor;
             }
         }
     }
@@ -59,37 +48,16 @@ public class InteractableItem : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInRange = false;
-            if (InteractionManager.instance != null)
+            if (spriteRenderer != null)
             {
-                InteractionManager.instance.UnregisterInteractable(this);
+                spriteRenderer.color = originalColor;
             }
         }
     }
 
-    private void CreateIndicator()
-    {
-        if (!showIndicator) return;
-
-        indicator = new GameObject("InteractionIndicator");
-        indicator.transform.parent = transform;
-        indicator.transform.localPosition = new Vector3(0, 1.5f, 0);
-
-        SpriteRenderer indicatorRenderer = indicator.AddComponent<SpriteRenderer>();
-        if (indicatorSprite != null)
-        {
-            indicatorRenderer.sprite = indicatorSprite;
-        }
-        indicatorRenderer.sortingLayerName = "UI";
-        indicatorRenderer.sortingOrder = 10;
-
-        indicator.SetActive(false);
-    }
-
     public void Interact()
     {
-        if (hasInteracted && oneTimeInteraction) return;
-
-        if (dialogueData != null && DialogueManager.instance != null)
+        if (dialogueData != null)
         {
             DialogueManager.instance.StartDialogue(dialogueData);
         }
@@ -103,31 +71,5 @@ public class InteractableItem : MonoBehaviour
     public string GetItemName()
     {
         return itemName;
-    }
-
-    public bool IsPlayerInRange()
-    {
-        return playerInRange && !hasInteracted;
-    }
-
-    public bool HasInteracted()
-    {
-        return hasInteracted;
-    }
-
-    public void ResetInteraction()
-    {
-        hasInteracted = false;
-    }
-
-    public void SetDialogueData(DialogueData data)
-    {
-        dialogueData = data;
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, interactRange);
     }
 }

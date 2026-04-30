@@ -6,113 +6,36 @@ using System.Collections.Generic;
 public class DialogueUIController : MonoBehaviour
 {
     [Header("UI Elements")]
-    [SerializeField]
-    private GameObject dialoguePanel;
-
-    [SerializeField]
-    private TextMeshProUGUI speakerNameText;
-
-    [SerializeField]
-    private TextMeshProUGUI dialogueText;
-
-    [SerializeField]
-    private Image speakerImage;
-
-    [SerializeField]
-    private Transform choicesContainer;
-
-    [SerializeField]
-    private GameObject choiceButtonPrefab;
-
-    [SerializeField]
-    private Button continueButton;
+    public GameObject dialoguePanel;
+    public TextMeshProUGUI speakerNameText;
+    public TextMeshProUGUI dialogueText;
+    public Image speakerImage;
+    public Transform choicesContainer;
+    public GameObject choiceButtonPrefab;
+    public Button continueButton;
 
     private List<GameObject> currentChoiceButtons = new List<GameObject>();
 
-    private void Awake()
-    {
-        if (DialogueManager.instance != null)
-        {
-            DialogueManager.instance.SetUIController(this);
-        }
-    }
-
     private void Start()
     {
-        HideDialogueUI();
-
+        dialoguePanel.SetActive(false);
+        
         if (continueButton != null)
         {
-            continueButton.onClick.AddListener(OnContinueClicked);
-        }
-
-        // 检查必要的UI元素
-        CheckUIElements();
-    }
-
-    private void CheckUIElements()
-    {
-        if (dialoguePanel == null)
-        {
-            Debug.LogError("Dialogue Panel is not set in DialogueUIController");
-        }
-
-        if (dialogueText == null)
-        {
-            Debug.LogError("Dialogue Text is not set in DialogueUIController");
-        }
-
-        if (speakerNameText == null)
-        {
-            Debug.LogError("Speaker Name Text is not set in DialogueUIController");
-        }
-
-        if (speakerImage == null)
-        {
-            Debug.LogError("Speaker Image is not set in DialogueUIController");
-        }
-
-        if (choicesContainer == null)
-        {
-            Debug.LogError("Choices Container is not set in DialogueUIController");
-        }
-
-        if (choiceButtonPrefab == null)
-        {
-            Debug.LogError("Choice Button Prefab is not set in DialogueUIController");
-        }
-
-        if (continueButton == null)
-        {
-            Debug.LogError("Continue Button is not set in DialogueUIController");
+            continueButton.onClick.AddListener(ContinueDialogue);
         }
     }
 
-    public void ShowDialogueUI()
-    {
-        if (dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(true);
-        }
-    }
-
-    public void HideDialogueUI()
-    {
-        if (dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(false);
-        }
-        ClearChoices();
-    }
-
-    public void DisplayDialogue(DialogueNode node)
+    public void ShowDialogue(DialogueNode node)
     {
         if (node == null)
         {
-            Debug.LogError("DisplayDialogue called with null node");
+            Debug.LogError("ShowDialogue called with null node!");
             return;
         }
 
+        dialoguePanel.SetActive(true);
+        
         if (speakerNameText != null)
         {
             speakerNameText.text = node.speakerName;
@@ -125,16 +48,14 @@ public class DialogueUIController : MonoBehaviour
 
         if (speakerImage != null)
         {
-            if (node.speakerImage != null)
+            if (node.speakerSprite != null)
             {
-                speakerImage.sprite = node.speakerImage;
+                speakerImage.sprite = node.speakerSprite;
                 speakerImage.gameObject.SetActive(true);
-                Debug.Log("Speaker image set: " + node.speakerImage.name);
             }
             else
             {
                 speakerImage.gameObject.SetActive(false);
-                Debug.Log("No speaker image for node: " + node.speakerName);
             }
         }
 
@@ -142,8 +63,8 @@ public class DialogueUIController : MonoBehaviour
 
         if (node.choices != null && node.choices.Count > 0)
         {
-            Debug.Log("Creating " + node.choices.Count + " choices for node: " + node.speakerName);
-            CreateChoiceButtons(node.choices);
+            CreateChoices(node.choices);
+            
             if (continueButton != null)
             {
                 continueButton.gameObject.SetActive(false);
@@ -151,7 +72,6 @@ public class DialogueUIController : MonoBehaviour
         }
         else
         {
-            Debug.Log("No choices for node: " + node.speakerName);
             if (continueButton != null)
             {
                 continueButton.gameObject.SetActive(!node.isEndNode);
@@ -159,17 +79,17 @@ public class DialogueUIController : MonoBehaviour
         }
     }
 
-    private void CreateChoiceButtons(List<DialogueChoice> choices)
+    private void CreateChoices(List<DialogueChoice> choices)
     {
         if (choicesContainer == null)
         {
-            Debug.LogError("Choices Container is null, cannot create choice buttons");
+            Debug.LogError("Choices Container is null!");
             return;
         }
 
         if (choiceButtonPrefab == null)
         {
-            Debug.LogError("Choice Button Prefab is null, cannot create choice buttons");
+            Debug.LogError("Choice Button Prefab is null!");
             return;
         }
 
@@ -181,14 +101,13 @@ public class DialogueUIController : MonoBehaviour
 
             if (buttonText != null)
             {
-                buttonText.text = choices[i].choiceText;
-                Debug.Log("Created choice button: " + choices[i].choiceText);
+                buttonText.text = choices[i].optionText;
             }
 
             int choiceIndex = i;
             if (button != null)
             {
-                button.onClick.AddListener(() => OnChoiceClicked(choiceIndex));
+                button.onClick.AddListener(() => SelectChoice(choiceIndex));
             }
 
             currentChoiceButtons.Add(buttonObj);
@@ -204,20 +123,25 @@ public class DialogueUIController : MonoBehaviour
         currentChoiceButtons.Clear();
     }
 
-    private void OnChoiceClicked(int choiceIndex)
+    private void SelectChoice(int choiceIndex)
     {
         if (DialogueManager.instance != null)
         {
-            Debug.Log("Choice clicked: " + choiceIndex);
             DialogueManager.instance.SelectChoice(choiceIndex);
         }
     }
 
-    private void OnContinueClicked()
+    private void ContinueDialogue()
     {
         if (DialogueManager.instance != null)
         {
             DialogueManager.instance.ContinueDialogue();
         }
+    }
+
+    public void HideDialogue()
+    {
+        dialoguePanel.SetActive(false);
+        ClearChoices();
     }
 }

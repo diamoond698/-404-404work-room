@@ -9,24 +9,28 @@ public class SimpleDialogueTrigger : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(triggerKey) && !hasTriggered)
+        if (Input.GetKeyDown(triggerKey) && !hasTriggered && !DialogueManager.instance.IsDialogueActive())
         {
-            if (dialogueData != null && DialogueManager.instance != null)
-            {
-                DialogueManager.instance.StartDialogue(dialogueData);
-                hasTriggered = true;
-            }
+            TriggerDialogue();
         }
     }
 
-    public void SetDialogueData(DialogueData data)
+    private void TriggerDialogue()
     {
-        dialogueData = data;
-    }
+        if (dialogueData == null)
+        {
+            Debug.LogError("Dialogue Data is not set!");
+            return;
+        }
 
-    public void SetTriggerKey(KeyCode key)
-    {
-        triggerKey = key;
+        if (DialogueManager.instance == null)
+        {
+            Debug.LogError("DialogueManager instance not found!");
+            return;
+        }
+
+        DialogueManager.instance.StartDialogue(dialogueData);
+        hasTriggered = true;
     }
 
     public void ResetTrigger()
