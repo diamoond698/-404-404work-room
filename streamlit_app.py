@@ -1,12 +1,16 @@
 import streamlit as st
 import requests
 import json
-import os
 from typing import List, Dict
 
-st.set_page_config(page_title="🎮 游戏AI Agent", layout="wide")
+st.set_page_config(
+    page_title="🎮 游戏AI Agent",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 st.title("🎮 游戏AI Agent")
-st.subheader("专业的游戏AI设计顾问 - 增强版（带知识库）")
+st.subheader("专业的游戏AI设计顾问 - 增强版（带知识库训练）")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -48,7 +52,8 @@ def search_knowledge(query: str, top_k: int = 3) -> List[Dict]:
             scored_docs.append({
                 "content": doc["content"],
                 "metadata": metadata,
-                "score": score
+                "score": score,
+                "id": doc.get("id", "")
             })
     
     scored_docs.sort(key=lambda x: x["score"], reverse=True)
@@ -89,13 +94,47 @@ with st.sidebar:
                     st.error("❌ 加载失败")
     else:
         st.success(f"✅ 知识库已就绪 ({len(st.session_state.knowledge_base)} 个文档)")
-        if st.button("🔄 重新加载"):
+        
+        st.markdown("---")
+        st.subheader("➕ 添加知识")
+        
+        new_id = st.text_input("知识ID", value=f"doc_{len(st.session_state.knowledge_base) + 1:03d}")
+        new_content = st.text_area("知识内容", height=150, placeholder="请输入新知识内容...")
+        new_category = st.text_input("分类标签", value="未分类")
+        new_source = st.text_input("来源", value="用户添加")
+        
+        if st.button("💾 添加到知识库"):
+            if new_content.strip():
+                new_doc = {
+                    "id": new_id,
+                    "content": new_content.strip(),
+                    "metadata": {
+                        "source": new_source,
+                        "category": new_category
+                    }
+                }
+                st.session_state.knowledge_base.append(new_doc)
+                
+                # 生成新的JSON文件供下载
+                updated_kb = st.session_state.knowledge_base
+                st.download_button(
+                    label="📥 下载更新后的知识库",
+                    data=json.dumps(updated_kb, ensure_ascii=False, indent=2),
+                    file_name="knowledge_base.json",
+                    mime="application/json"
+                )
+                st.success(f"✅ 已添加！请下载并上传到GitHub更新！")
+            else:
+                st.error("❌ 请输入知识内容")
+        
+        st.markdown("---")
+        if st.button("🔄 重新加载知识库"):
             st.session_state.kb_loaded = False
             st.session_state.knowledge_base = []
             st.experimental_rerun()
     
     st.markdown("---")
-    st.subheader("设置")
+    st.subheader("⚙️ 设置")
     temperature = st.slider("创意度", 0.0, 1.0, 0.7, 0.1)
     use_knowledge = st.checkbox("使用知识库", value=True)
     show_reasoning = st.checkbox("显示思考过程", value=True)
@@ -111,10 +150,11 @@ with st.sidebar:
             st.session_state.messages.pop()
             st.experimental_rerun()
 
-col1, col2 = st.columns([3, 1])
+st.markdown("---")
 
-with col1:
-    st.subheader("对话")
+chat_container = st.container()
+with chat_container:
+    st.subheader("💬 对话")
     
     for i, msg in enumerate(st.session_state.messages):
         with st.chat_message(msg["role"]):
@@ -124,59 +164,62 @@ with col1:
                 if st.button("📋 复制", key=f"copy_{i}"):
                     st.code(msg["content"])
 
-    prompt = st.chat_input("输入您的游戏AI问题...")
+st.markdown("---")
+
+prompt = st.chat_input("输入您的游戏AI问题...", key="fixed_input")
+
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
     
-    if prompt:
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
-        
-        with st.chat_message("assistant"):
-            with st.spinner("🤔 思考中..."):
-                context = ""
-                sources = []
-                
-                if use_knowledge and st.session_state.knowledge_base:
-                    relevant_docs = search_knowledge(prompt, top_k=3)
-                    if relevant_docs:
-                        context = "\n\n".join([doc["content"] for doc in relevant_docs])
-                        sources = relevant_docs
-                        if show_sources:
-                            st.info(f"📚 从知识库检索到 {len(relevant_docs)} 个相关文档")
-                
-                system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
-                if context:
-                    system_msg += f"\n\n参考以下知识库内容回答问题：\n{context}"
-                
-                history = [{"role": "system", "content": system_msg}]
-                history += st.session_state.messages[:-1]
-                history.append({"role": "user", "content": prompt})
-                
-                final_answer = call_api(history, temperature)
-                st.write(final_answer)
-                
-                if show_sources and sources:
-                    with st.expander("📖 知识来源"):
-                        for idx, doc in enumerate(sources, 1):
-                            st.markdown(f"**来源 {idx}** (相关度: {doc['score']})")
-                            st.text(doc["content"][:200] + "...")
-                            st.markdown("---")
-                
-                full_response = final_answer
-                
-                if show_reasoning:
-                    with st.expander("🧠 查看思考过程"):
-                        reason_prompt = f"请模拟游戏AI顾问的思考过程，分析这个问题: {prompt}。请分4点回答: 1.问题分析 2.信息检索 3.推理步骤 4.结论形成"
-                        reasoning = call_api([{"role": "user", "content": reason_prompt}], 0.5)
-                        st.write(reasoning)
-                        full_response = f"【推理过程】\n{reasoning}\n\n【最终回答】\n{final_answer}"
-                
-                if show_flowchart:
-                    st.markdown("### 📊 流程图")
-                    flowchart_prompt = f"请为以下问答生成Mermaid格式流程图，只输出代码。问题: {prompt} 回答: {final_answer}"
-                    flowchart = call_api([{"role": "user", "content": flowchart_prompt}], 0.3)
-                    st.code(flowchart, language="markdown")
-                    st.info("提示: 将Mermaid代码复制到 https://mermaid.live 可查看图表")
-                    full_response = f"{full_response}\n\n【流程图】\n{flowchart}"
-                
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
+    with st.chat_message("assistant"):
+        with st.spinner("🤔 思考中..."):
+            context = ""
+            sources = []
+            
+            if use_knowledge and st.session_state.knowledge_base:
+                relevant_docs = search_knowledge(prompt, top_k=3)
+                if relevant_docs:
+                    context = "\n\n".join([doc["content"] for doc in relevant_docs])
+                    sources = relevant_docs
+                    if show_sources:
+                        st.info(f"📚 从知识库检索到 {len(relevant_docs)} 个相关文档")
+            
+            system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
+            if context:
+                system_msg += f"\n\n参考以下知识库内容回答问题：\n{context}"
+            
+            history = [{"role": "system", "content": system_msg}]
+            history += st.session_state.messages[:-1]
+            history.append({"role": "user", "content": prompt})
+            
+            final_answer = call_api(history, temperature)
+            st.write(final_answer)
+            
+            if show_sources and sources:
+                with st.expander("📖 知识来源"):
+                    for idx, doc in enumerate(sources, 1):
+                        st.markdown(f"**来源 {idx}** (相关度: {doc['score']}, ID: {doc['id']})")
+                        st.text(doc["content"][:200] + "...")
+                        st.markdown("---")
+            
+            full_response = final_answer
+            
+            if show_reasoning:
+                with st.expander("🧠 查看思考过程"):
+                    reason_prompt = f"请模拟游戏AI顾问的思考过程，分析这个问题: {prompt}。请分4点回答: 1.问题分析 2.信息检索 3.推理步骤 4.结论形成"
+                    reasoning = call_api([{"role": "user", "content": reason_prompt}], 0.5)
+                    st.write(reasoning)
+                    full_response = f"【推理过程】\n{reasoning}\n\n【最终回答】\n{final_answer}"
+            
+            if show_flowchart:
+                st.markdown("### 📊 流程图")
+                flowchart_prompt = f"请为以下问答生成Mermaid格式流程图，只输出代码。问题: {prompt} 回答: {final_answer}"
+                flowchart = call_api([{"role": "user", "content": flowchart_prompt}], 0.3)
+                st.code(flowchart, language="markdown")
+                st.info("提示: 将Mermaid代码复制到 https://mermaid.live 可查看图表")
+                full_response = f"{full_response}\n\n【流程图】\n{flowchart}"
+            
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            st.experimental_rerun()
