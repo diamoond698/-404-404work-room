@@ -6,8 +6,165 @@ from datetime import datetime
 
 st.set_page_config(page_title="🎮 游戏AI Agent", layout="wide")
 
-st.title("🎮 游戏AI Agent")
-st.subheader("专业的游戏AI设计顾问")
+st.markdown("""
+<style>
+    .stApp {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .stSidebar {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stButton>button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .user-message {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 16px;
+    }
+    
+    .user-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px 16px 4px 16px;
+        padding: 16px 20px;
+        max-width: 70%;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .assistant-message {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 16px;
+    }
+    
+    .assistant-content {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px 16px 16px 4px;
+        padding: 16px 20px;
+        max-width: 70%;
+        backdrop-filter: blur(10px);
+    }
+    
+    .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin: 0 12px;
+        flex-shrink: 0;
+    }
+    
+    .user-avatar {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .assistant-avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .message-text {
+        color: white;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+    
+    .chat-input {
+        position: fixed;
+        bottom: 0;
+        left: 240px;
+        right: 0;
+        background: rgba(26, 26, 46, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 16px 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 100;
+    }
+    
+    .stTextInput>div>div>input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        color: white;
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    
+    .stCodeBlock {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border-radius: 8px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        margin-top: 12px;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #fff;
+        text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+    }
+    
+    p, li, label {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .stSlider>div>div>div>div {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    .stSelectbox>div>div {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+    }
+    
+    .stExpander {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
+    
+    .stTab[data-baseweb="tab"] {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 8px 8px 0 0 !important;
+    }
+    
+    .stTab[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    .copy-btn {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border: none;
+        border-radius: 6px;
+        padding: 6px 12px;
+        color: white;
+        font-size: 12px;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 if "conversations" not in st.session_state:
     st.session_state.conversations = [{"id": "conv_001", "name": "新对话", "messages": [], "created": datetime.now().isoformat()}]
@@ -108,7 +265,7 @@ def analyze_performance(ai_type, complexity, entity_count):
     return "❌ 不支持的AI类型"
 
 with st.sidebar:
-    st.subheader("📝 对话列表")
+    st.markdown("## 📝 对话列表")
     
     if st.button("➕ 新对话"):
         new_id = f"conv_{len(st.session_state.conversations) + 1:03d}"
@@ -123,11 +280,12 @@ with st.sidebar:
     st.markdown("---")
     
     for conv in st.session_state.conversations:
-        if st.button(conv["name"], key=conv["id"], use_container_width=True):
+        active = "✅ " if conv["id"] == st.session_state.current_conv_id else ""
+        if st.button(f"{active}{conv['name']}", key=conv["id"], use_container_width=True):
             st.session_state.current_conv_id = conv["id"]
     
     st.markdown("---")
-    st.subheader("📚 知识库")
+    st.markdown("## 📚 知识库")
     
     if not st.session_state.kb_loaded:
         if st.button("📥 加载知识库"):
@@ -140,26 +298,62 @@ with st.sidebar:
         st.success(f"✅ 已加载 {len(st.session_state.knowledge_base)} 个文档")
     
     st.markdown("---")
-    st.subheader("⚙️ 设置")
+    st.markdown("## ⚙️ 设置")
     temperature = st.slider("创意度", 0.0, 1.0, 0.7, 0.1)
     use_knowledge = st.checkbox("使用知识库", value=True)
     show_reasoning = st.checkbox("显示思考过程", value=True)
     show_flowchart = st.checkbox("显示流程图", value=True)
+
+st.markdown("""
+<div style="text-align: center; padding: 20px; margin-bottom: 20px;">
+    <h1 style="font-size: 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+        🎮 游戏AI Agent
+    </h1>
+    <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">专业的游戏AI设计顾问 - 赛博朋克版</p>
+</div>
+""", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["💬 聊天", "🔧 代码生成", "⚡ 性能预估"])
 
 with tab1:
     current_conv = get_current_conversation()
     if current_conv:
-        st.subheader(f"{current_conv['name']}")
+        st.markdown(f"<h3 style='color: #fff; margin-bottom: 20px;'>{current_conv['name']}</h3>", unsafe_allow_html=True)
         
-        for msg in current_conv["messages"]:
-            with st.chat_message(msg["role"]):
-                st.write(msg["content"])
-                if msg["role"] == "assistant":
-                    st.code(msg["content"], language="markdown")
+        chat_container = st.container()
+        with chat_container:
+            for msg in current_conv["messages"]:
+                if msg["role"] == "user":
+                    st.markdown(f"""
+                    <div class="user-message">
+                        <div class="user-content">
+                            <p class="message-text">{msg['content']}</p>
+                        </div>
+                        <div class="avatar user-avatar">👤</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="assistant-message">
+                        <div class="avatar assistant-avatar">🤖</div>
+                        <div class="assistant-content">
+                            <p class="message-text">{msg['content']}</p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="chat-input">
+            <div style="max-width: 800px; margin: 0 auto;">
+        """, unsafe_allow_html=True)
         
         prompt = st.chat_input("输入您的游戏AI问题...")
+        
+        st.markdown("""
+            </div>
+        </div>
+        <div style="height: 80px;"></div>
+        """, unsafe_allow_html=True)
         
         if prompt:
             current_conv["messages"].append({"role": "user", "content": prompt})
@@ -178,27 +372,11 @@ with tab1:
             for m in current_conv["messages"]:
                 history.append({"role": m["role"], "content": m["content"]})
             
-            with st.chat_message("assistant"):
-                with st.spinner("思考中..."):
-                    answer = call_api(history, temperature)
-                    st.write(answer)
-                    
-                    if show_reasoning:
-                        with st.expander("🧠 思考过程"):
-                            reason_prompt = f"分析问题: {prompt}，请分4点回答: 1.问题分析 2.信息检索 3.推理步骤 4.结论形成"
-                            reasoning = call_api([{"role": "user", "content": reason_prompt}], 0.5)
-                            st.write(reasoning)
-                    
-                    if show_flowchart:
-                        with st.expander("📊 流程图"):
-                            flowchart_prompt = f"生成Mermaid流程图代码，只输出代码。问题: {prompt} 回答: {answer}"
-                            flowchart = call_api([{"role": "user", "content": flowchart_prompt}], 0.3)
-                            st.code(flowchart, language="markdown")
-                    
-                    current_conv["messages"].append({"role": "assistant", "content": answer})
+            answer = call_api(history, temperature)
+            current_conv["messages"].append({"role": "assistant", "content": answer})
 
 with tab2:
-    st.subheader("🔧 AI代码生成器")
+    st.markdown("<h3 style='color: #fff; margin-bottom: 10px;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
     st.write("根据您的需求，自动生成游戏AI代码！")
     
     code_prompt = st.text_area("描述您的AI需求", height=200, placeholder="例如：创建一个Unity中的敌人巡逻AI，包含追逐玩家和攻击行为...")
@@ -210,13 +388,13 @@ with tab2:
         if code_prompt.strip():
             with st.spinner("正在生成代码..."):
                 code = generate_code(code_prompt, lang_map[language])
-                st.subheader("生成的代码")
+                st.markdown("<h4 style='color: #fff; margin-top: 20px;'>生成的代码</h4>", unsafe_allow_html=True)
                 st.code(code, language=lang_map[language])
         else:
             st.error("请输入AI需求描述")
 
 with tab3:
-    st.subheader("⚡ AI性能预估")
+    st.markdown("<h3 style='color: #fff; margin-bottom: 10px;'>⚡ AI性能预估</h3>", unsafe_allow_html=True)
     st.write("分析AI系统的性能消耗，提供优化建议")
     
     ai_type = st.selectbox("AI类型", ["behavior_tree", "state_machine", "pathfinding", "neural_network"], format_func=lambda x: {
@@ -232,5 +410,5 @@ with tab3:
     if st.button("📊 分析性能"):
         with st.spinner("正在分析..."):
             result = analyze_performance(ai_type, complexity, entity_count)
-            st.subheader("性能分析报告")
+            st.markdown("<h4 style='color: #fff; margin-top: 20px;'>性能分析报告</h4>", unsafe_allow_html=True)
             st.write(result)
