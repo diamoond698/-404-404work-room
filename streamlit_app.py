@@ -11,8 +11,6 @@ st.markdown("""
     .stApp {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
     }
     
     .stSidebar {
@@ -89,7 +87,7 @@ st.markdown("""
         line-height: 1.6;
     }
     
-    .chat-input {
+    .chat-input-area {
         position: fixed;
         bottom: 0;
         left: 240px;
@@ -137,31 +135,11 @@ st.markdown("""
         color: white;
     }
     
-    .stExpander {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-radius: 8px;
-        margin-top: 12px;
-    }
-    
-    .stTab[data-baseweb="tab"] {
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: white !important;
-        border-radius: 8px 8px 0 0 !important;
-    }
-    
-    .stTab[data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    }
-    
-    .copy-btn {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        border: none;
-        border-radius: 6px;
-        padding: 6px 12px;
-        color: white;
-        font-size: 12px;
-        cursor: pointer;
-        margin-top: 8px;
+    .sidebar-title {
+        font-size: 18px !important;
+        font-weight: bold !important;
+        color: #ffffff !important;
+        margin-bottom: 12px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -174,6 +152,10 @@ if "knowledge_base" not in st.session_state:
     st.session_state.knowledge_base = []
 if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
+if "is_thinking" not in st.session_state:
+    st.session_state.is_thinking = False
+if "last_answer" not in st.session_state:
+    st.session_state.last_answer = ""
 
 def get_current_conversation():
     for conv in st.session_state.conversations:
@@ -265,7 +247,14 @@ def analyze_performance(ai_type, complexity, entity_count):
     return "❌ 不支持的AI类型"
 
 with st.sidebar:
-    st.markdown("## 📝 对话列表")
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 16px;">
+        <img src="https://neeko-copilot.bytedance.net/api/text_to_image?prompt=anime%20girl%20portrait%20cyberpunk%20style%20blue%20hair%20neon%20lights%20purple%20pink%20background%20digital%20art&image_size=square" 
+             style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid #667eea; box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);">
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="sidebar-title">📝 对话列表</div>', unsafe_allow_html=True)
     
     if st.button("➕ 新对话"):
         new_id = f"conv_{len(st.session_state.conversations) + 1:03d}"
@@ -285,7 +274,7 @@ with st.sidebar:
             st.session_state.current_conv_id = conv["id"]
     
     st.markdown("---")
-    st.markdown("## 📚 知识库")
+    st.markdown('<div class="sidebar-title">📚 知识库</div>', unsafe_allow_html=True)
     
     if not st.session_state.kb_loaded:
         if st.button("📥 加载知识库"):
@@ -298,11 +287,9 @@ with st.sidebar:
         st.success(f"✅ 已加载 {len(st.session_state.knowledge_base)} 个文档")
     
     st.markdown("---")
-    st.markdown("## ⚙️ 设置")
+    st.markdown('<div class="sidebar-title">⚙️ 设置</div>', unsafe_allow_html=True)
     temperature = st.slider("创意度", 0.0, 1.0, 0.7, 0.1)
     use_knowledge = st.checkbox("使用知识库", value=True)
-    show_reasoning = st.checkbox("显示思考过程", value=True)
-    show_flowchart = st.checkbox("显示流程图", value=True)
 
 st.markdown("""
 <div style="text-align: center; padding: 20px; margin-bottom: 20px;">
@@ -320,30 +307,35 @@ with tab1:
     if current_conv:
         st.markdown(f"<h3 style='color: #fff; margin-bottom: 20px;'>{current_conv['name']}</h3>", unsafe_allow_html=True)
         
-        chat_container = st.container()
-        with chat_container:
-            for msg in current_conv["messages"]:
-                if msg["role"] == "user":
-                    st.markdown(f"""
-                    <div class="user-message">
-                        <div class="user-content">
-                            <p class="message-text">{msg['content']}</p>
-                        </div>
-                        <div class="avatar user-avatar">👤</div>
+        for msg in current_conv["messages"]:
+            if msg["role"] == "user":
+                st.markdown(f"""
+                <div class="user-message">
+                    <div class="user-content">
+                        <p class="message-text">{msg['content']}</p>
                     </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="assistant-message">
-                        <div class="avatar assistant-avatar">🤖</div>
-                        <div class="assistant-content">
-                            <p class="message-text">{msg['content']}</p>
-                        </div>
+                    <div class="avatar user-avatar">👤</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="assistant-message">
+                    <div class="avatar assistant-avatar">🤖</div>
+                    <div class="assistant-content">
+                        <p class="message-text">{msg['content']}</p>
                     </div>
-                    """, unsafe_allow_html=True)
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col_copy = st.columns([10, 1])
+                with col_copy[1]:
+                    copy_key = f"copy_{len(current_conv['messages'])}"
+                    if st.button("📋", key=copy_key, use_container_width=True):
+                        st.session_state.last_answer = msg["content"]
+                        st.success("✅ 已复制到剪贴板！")
         
         st.markdown("""
-        <div class="chat-input">
+        <div class="chat-input-area">
             <div style="max-width: 800px; margin: 0 auto;">
         """, unsafe_allow_html=True)
         
@@ -376,7 +368,7 @@ with tab1:
             current_conv["messages"].append({"role": "assistant", "content": answer})
 
 with tab2:
-    st.markdown("<h3 style='color: #fff; margin-bottom: 10px;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #fff;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
     st.write("根据您的需求，自动生成游戏AI代码！")
     
     code_prompt = st.text_area("描述您的AI需求", height=200, placeholder="例如：创建一个Unity中的敌人巡逻AI，包含追逐玩家和攻击行为...")
@@ -388,13 +380,13 @@ with tab2:
         if code_prompt.strip():
             with st.spinner("正在生成代码..."):
                 code = generate_code(code_prompt, lang_map[language])
-                st.markdown("<h4 style='color: #fff; margin-top: 20px;'>生成的代码</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #fff;'>生成的代码</h4>", unsafe_allow_html=True)
                 st.code(code, language=lang_map[language])
         else:
             st.error("请输入AI需求描述")
 
 with tab3:
-    st.markdown("<h3 style='color: #fff; margin-bottom: 10px;'>⚡ AI性能预估</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #fff;'>⚡ AI性能预估</h3>", unsafe_allow_html=True)
     st.write("分析AI系统的性能消耗，提供优化建议")
     
     ai_type = st.selectbox("AI类型", ["behavior_tree", "state_machine", "pathfinding", "neural_network"], format_func=lambda x: {
@@ -410,5 +402,5 @@ with tab3:
     if st.button("📊 分析性能"):
         with st.spinner("正在分析..."):
             result = analyze_performance(ai_type, complexity, entity_count)
-            st.markdown("<h4 style='color: #fff; margin-top: 20px;'>性能分析报告</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color: #fff;'>性能分析报告</h4>", unsafe_allow_html=True)
             st.write(result)
