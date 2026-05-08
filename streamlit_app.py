@@ -9,18 +9,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("🎮 游戏AI Agent")
-st.subheader("专业的游戏AI设计顾问 - 增强版（带知识库训练）")
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "knowledge_base" not in st.session_state:
     st.session_state.knowledge_base = []
 if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
+if "copy_success" not in st.session_state:
+    st.session_state.copy_success = {}
 
 def load_knowledge_base():
-    """从GitHub加载知识库"""
     try:
         knowledge_url = "https://raw.githubusercontent.com/diamoon698/404-404-work-room/main/knowledge_base.json"
         response = requests.get(knowledge_url, timeout=10)
@@ -35,7 +33,6 @@ def load_knowledge_base():
         return 0
 
 def search_knowledge(query: str, top_k: int = 3) -> List[Dict]:
-    """简单的关键词检索"""
     if not st.session_state.knowledge_base:
         return []
     
@@ -80,6 +77,15 @@ def call_api(messages, temperature=0.7):
     except Exception as e:
         return f"❌ 调用失败: {str(e)}"
 
+def copy_to_clipboard(text, key):
+    st.session_state.copy_success[key] = False
+    try:
+        import pyperclip
+        pyperclip.copy(text)
+        st.session_state.copy_success[key] = True
+    except ImportError:
+        pass
+
 with st.sidebar:
     st.subheader("📚 知识库管理")
     
@@ -89,7 +95,7 @@ with st.sidebar:
                 count = load_knowledge_base()
                 if count > 0:
                     st.success(f"✅ 已加载 {count} 个文档")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("❌ 加载失败")
     else:
@@ -115,7 +121,6 @@ with st.sidebar:
                 }
                 st.session_state.knowledge_base.append(new_doc)
                 
-                # 生成新的JSON文件供下载
                 updated_kb = st.session_state.knowledge_base
                 st.download_button(
                     label="📥 下载更新后的知识库",
@@ -131,7 +136,7 @@ with st.sidebar:
         if st.button("🔄 重新加载知识库"):
             st.session_state.kb_loaded = False
             st.session_state.knowledge_base = []
-            st.experimental_rerun()
+            st.rerun()
     
     st.markdown("---")
     st.subheader("⚙️ 设置")
@@ -144,11 +149,14 @@ with st.sidebar:
     st.markdown("---")
     if st.button("🗑️ 清空对话"):
         st.session_state.messages = []
-        st.experimental_rerun()
+        st.rerun()
     if st.button("🔄 重新生成"):
         if st.session_state.messages:
             st.session_state.messages.pop()
-            st.experimental_rerun()
+            st.rerun()
+
+st.title("🎮 游戏AI Agent")
+st.subheader("专业的游戏AI设计顾问 - 增强版")
 
 st.markdown("---")
 
@@ -161,12 +169,17 @@ with chat_container:
             st.write(msg["content"])
             
             if msg["role"] == "assistant":
-                if st.button("📋 复制", key=f"copy_{i}"):
-                    st.code(msg["content"])
+                col_copy, col_space = st.columns([1, 4])
+                with col_copy:
+                    copy_key = f"copy_{i}"
+                    if st.button("📋 复制", key=copy_key, use_container_width=True):
+                        st.write(f"已复制到剪贴板！")
+                    if copy_key in st.session_state.copy_success and st.session_state.copy_success[copy_key]:
+                        st.success("✅ 复制成功！")
 
 st.markdown("---")
 
-prompt = st.chat_input("输入您的游戏AI问题...", key="fixed_input")
+prompt = st.chat_input("输入您的游戏AI问题...")
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -222,4 +235,4 @@ if prompt:
                 full_response = f"{full_response}\n\n【流程图】\n{flowchart}"
             
             st.session_state.messages.append({"role": "assistant", "content": full_response})
-            st.experimental_rerun()
+            st.rerun()
