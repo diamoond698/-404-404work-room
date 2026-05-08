@@ -1,13 +1,58 @@
 import streamlit as st
 import requests
 import json
+import os
+from typing import List, Dict
 
 st.set_page_config(page_title="🎮 游戏AI Agent", layout="wide")
 st.title("🎮 游戏AI Agent")
-st.subheader("专业的游戏AI设计顾问")
+st.subheader("专业的游戏AI设计顾问 - 增强版（带知识库）")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "knowledge_base" not in st.session_state:
+    st.session_state.knowledge_base = []
+if "kb_loaded" not in st.session_state:
+    st.session_state.kb_loaded = False
+
+def load_knowledge_base():
+    """从GitHub加载知识库"""
+    try:
+        knowledge_url = "https://raw.githubusercontent.com/diamoon698/404-404-work-room/main/knowledge_base.json"
+        response = requests.get(knowledge_url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            st.session_state.knowledge_base = data
+            st.session_state.kb_loaded = True
+            return len(data)
+        return 0
+    except Exception as e:
+        st.sidebar.error(f"知识库加载失败: {str(e)}")
+        return 0
+
+def search_knowledge(query: str, top_k: int = 3) -> List[Dict]:
+    """简单的关键词检索"""
+    if not st.session_state.knowledge_base:
+        return []
+    
+    query_keywords = set(query.lower().split())
+    scored_docs = []
+    
+    for doc in st.session_state.knowledge_base:
+        content = doc.get("content", "").lower()
+        metadata = doc.get("metadata", {})
+        
+        score = sum(1 for keyword in query_keywords if keyword in content)
+        
+        if score > 0:
+            scored_docs.append({
+                "content": doc["content"],
+                "metadata": metadata,
+                "score": score
+            })
+    
+    scored_docs.sort(key=lambda x: x["score"], reverse=True)
+    return scored_docs[:top_k]
 
 def call_api(messages, temperature=0.7):
     api_key = st.secrets.get("DEEPSEEK_API_KEY", "")
@@ -30,13 +75,33 @@ def call_api(messages, temperature=0.7):
     except Exception as e:
         return f"❌ 调用失败: {str(e)}"
 
-col1, col2 = st.columns([3, 1])
-
-with col2:
+with st.sidebar:
+    st.subheader("📚 知识库管理")
+    
+    if not st.session_state.kb_loaded:
+        if st.button("📥 加载知识库"):
+            with st.spinner("正在加载..."):
+                count = load_knowledge_base()
+                if count > 0:
+                    st.success(f"✅ 已加载 {count} 个文档")
+                    st.experimental_rerun()
+                else:
+                    st.error("❌ 加载失败")
+    else:
+        st.success(f"✅ 知识库已就绪 ({len(st.session_state.knowledge_base)} 个文档)")
+        if st.button("🔄 重新加载"):
+            st.session_state.kb_loaded = False
+            st.session_state.knowledge_base = []
+            st.experimental_rerun()
+    
+    st.markdown("---")
     st.subheader("设置")
     temperature = st.slider("创意度", 0.0, 1.0, 0.7, 0.1)
+    use_knowledge = st.checkbox("使用知识库", value=True)
     show_reasoning = st.checkbox("显示思考过程", value=True)
     show_flowchart = st.checkbox("显示流程图", value=True)
+    show_sources = st.checkbox("显示知识来源", value=True)
+    
     st.markdown("---")
     if st.button("🗑️ 清空对话"):
         st.session_state.messages = []
@@ -45,6 +110,8 @@ with col2:
         if st.session_state.messages:
             st.session_state.messages.pop()
             st.experimental_rerun()
+
+col1, col2 = st.columns([3, 1])
 
 with col1:
     st.subheader("对话")
@@ -66,12 +133,34 @@ with col1:
         
         with st.chat_message("assistant"):
             with st.spinner("🤔 思考中..."):
-                history = [{"role": "system", "content": "你是专业游戏AI顾问，擅长游戏AI设计和实现"}]
+                context = ""
+                sources = []
+                
+                if use_knowledge and st.session_state.knowledge_base:
+                    relevant_docs = search_knowledge(prompt, top_k=3)
+                    if relevant_docs:
+                        context = "\n\n".join([doc["content"] for doc in relevant_docs])
+                        sources = relevant_docs
+                        if show_sources:
+                            st.info(f"📚 从知识库检索到 {len(relevant_docs)} 个相关文档")
+                
+                system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
+                if context:
+                    system_msg += f"\n\n参考以下知识库内容回答问题：\n{context}"
+                
+                history = [{"role": "system", "content": system_msg}]
                 history += st.session_state.messages[:-1]
                 history.append({"role": "user", "content": prompt})
                 
                 final_answer = call_api(history, temperature)
                 st.write(final_answer)
+                
+                if show_sources and sources:
+                    with st.expander("📖 知识来源"):
+                        for idx, doc in enumerate(sources, 1):
+                            st.markdown(f"**来源 {idx}** (相关度: {doc['score']})")
+                            st.text(doc["content"][:200] + "...")
+                            st.markdown("---")
                 
                 full_response = final_answer
                 
@@ -88,9 +177,6 @@ with col1:
                     flowchart = call_api([{"role": "user", "content": flowchart_prompt}], 0.3)
                     st.code(flowchart, language="markdown")
                     st.info("提示: 将Mermaid代码复制到 https://mermaid.live 可查看图表")
-                    if show_reasoning:
-                        full_response = f"{full_response}\n\n【流程图】\n{flowchart}"
-                    else:
-                        full_response = f"【最终回答】\n{final_answer}\n\n【流程图】\n{flowchart}"
+                    full_response = f"{full_response}\n\n【流程图】\n{flowchart}"
                 
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
