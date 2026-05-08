@@ -163,6 +163,10 @@ if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
 if "is_thinking" not in st.session_state:
     st.session_state.is_thinking = False
+if "code_generated" not in st.session_state:
+    st.session_state.code_generated = ""
+if "performance_result" not in st.session_state:
+    st.session_state.performance_result = ""
 
 def get_current_conversation():
     for conv in st.session_state.conversations:
@@ -181,6 +185,7 @@ def load_knowledge_base():
             return len(data)
         return 0
     except Exception as e:
+        st.error(f"加载知识库失败: {str(e)}")
         return 0
 
 def search_knowledge(query: str, top_k: int = 3) -> List[Dict]:
@@ -221,7 +226,7 @@ def call_api(messages, temperature=0.7):
             return result["choices"][0]["message"]["content"]
         elif "error" in result:
             return f"❌ API错误: {result['error'].get('message', '未知错误')}"
-        return f"❌ 响应异常"
+        return f"❌ 响应异常: {result}"
     except Exception as e:
         return f"❌ 调用失败: {str(e)}"
 
@@ -263,8 +268,7 @@ with st.sidebar:
     
     st.markdown('<div class="sidebar-title">📝 对话列表</div>', unsafe_allow_html=True)
     
-    new_conv_key = f"new_conv_{datetime.now().timestamp()}"
-    if st.button("➕ 新对话", key=new_conv_key):
+    if st.button("➕ 新对话"):
         new_id = f"conv_{len(st.session_state.conversations) + 1:03d}"
         st.session_state.conversations.append({
             "id": new_id,
@@ -276,18 +280,16 @@ with st.sidebar:
     
     st.markdown("---")
     
-    for idx, conv in enumerate(st.session_state.conversations):
+    for conv in st.session_state.conversations:
         active = "✅ " if conv["id"] == st.session_state.current_conv_id else ""
-        conv_key = f"conv_btn_{conv['id']}_{idx}"
-        if st.button(f"{active}{conv['name']}", key=conv_key, use_container_width=True):
+        if st.button(f"{active}{conv['name']}", use_container_width=True):
             st.session_state.current_conv_id = conv["id"]
     
     st.markdown("---")
     st.markdown('<div class="sidebar-title">📚 知识库</div>', unsafe_allow_html=True)
     
     if not st.session_state.kb_loaded:
-        load_kb_key = f"load_kb_{datetime.now().timestamp()}"
-        if st.button("📥 加载知识库", key=load_kb_key):
+        if st.button("📥 加载知识库"):
             count = load_knowledge_base()
             if count > 0:
                 st.success(f"✅ 已加载 {count} 个文档")
@@ -317,8 +319,7 @@ with tab1:
     if current_conv:
         st.markdown(f"<h3 style='color: #fff; margin-bottom: 20px;'>{current_conv['name']}</h3>", unsafe_allow_html=True)
         
-        msg_index = 0
-        for msg in current_conv["messages"]:
+        for idx, msg in enumerate(current_conv["messages"]):
             if msg["role"] == "user":
                 st.markdown(f"""
                 <div class="user-message">
@@ -338,13 +339,10 @@ with tab1:
                 </div>
                 """, unsafe_allow_html=True)
                 
-                copy_key = f"copy_btn_{current_conv['id']}_{msg_index}"
                 col_copy = st.columns([10, 1])
                 with col_copy[1]:
-                    if st.button("📋", key=copy_key, use_container_width=True):
-                        st.session_state.last_answer = msg["content"]
+                    if st.button("📋", key=f"copy_{idx}"):
                         st.success("✅ 已复制到剪贴板！")
-            msg_index += 1
         
         if st.session_state.is_thinking:
             st.markdown(f"""
@@ -371,7 +369,6 @@ with tab1:
         
         if prompt:
             current_conv["messages"].append({"role": "user", "content": prompt})
-            st.session_state.is_thinking = True
             
             context = ""
             if use_knowledge and st.session_state.kb_loaded and st.session_state.knowledge_base:
@@ -389,44 +386,50 @@ with tab1:
             
             answer = call_api(history, temperature)
             current_conv["messages"].append({"role": "assistant", "content": answer})
-            st.session_state.is_thinking = False
 
 with tab2:
     st.markdown("<h3 style='color: #fff;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
     st.write("根据您的需求，自动生成游戏AI代码！")
     
-    code_prompt = st.text_area("描述您的AI需求", height=200, placeholder="例如：创建一个Unity中的敌人巡逻AI，包含追逐玩家和攻击行为...")
+    code_prompt = st.text_area("描述您的AI需求", height=200, placeholder="例如：创建一个Unity中的敌人巡逻AI，包含追逐玩家和攻击行为...", key="code_prompt")
     
-    language = st.selectbox("选择语言", ["C# (Unity)", "Python", "Lua", "C++ (Unreal)"])
+    language = st.selectbox("选择语言", ["C# (Unity)", "Python", "Lua", "C++ (Unreal)"], key="lang_select")
     lang_map = {"C# (Unity)": "csharp", "Python": "python", "Lua": "lua", "C++ (Unreal)": "cpp"}
     
-    gen_code_key = f"gen_code_{datetime.now().timestamp()}"
-    if st.button("🚀 生成代码", key=gen_code_key):
+    if st.button("🚀 生成代码", key="gen_code_btn"):
         if code_prompt.strip():
             with st.spinner("正在生成代码..."):
                 code = generate_code(code_prompt, lang_map[language])
+                st.session_state.code_generated = code
                 st.markdown("<h4 style='color: #fff;'>生成的代码</h4>", unsafe_allow_html=True)
                 st.code(code, language=lang_map[language])
         else:
             st.error("请输入AI需求描述")
+    elif st.session_state.code_generated:
+        st.markdown("<h4 style='color: #fff;'>生成的代码</h4>", unsafe_allow_html=True)
+        st.code(st.session_state.code_generated, language=lang_map[language])
 
 with tab3:
     st.markdown("<h3 style='color: #fff;'>⚡ AI性能预估</h3>", unsafe_allow_html=True)
     st.write("分析AI系统的性能消耗，提供优化建议")
     
-    ai_type = st.selectbox("AI类型", ["behavior_tree", "state_machine", "pathfinding", "neural_network"], format_func=lambda x: {
-        "behavior_tree": "行为树",
-        "state_machine": "状态机",
-        "pathfinding": "寻路系统",
-        "neural_network": "神经网络"
-    }[x])
+    ai_type = st.selectbox("AI类型", ["behavior_tree", "state_machine", "pathfinding", "neural_network"], 
+                          format_func=lambda x: {
+                              "behavior_tree": "行为树",
+                              "state_machine": "状态机",
+                              "pathfinding": "寻路系统",
+                              "neural_network": "神经网络"
+                          }[x], key="ai_type_select")
     
-    complexity = st.slider("复杂度等级", 1, 5, 3, help="1=简单，5=复杂")
-    entity_count = st.slider("实体数量", 10, 1000, 100, step=10)
+    complexity = st.slider("复杂度等级", 1, 5, 3, help="1=简单，5=复杂", key="complexity_slider")
+    entity_count = st.slider("实体数量", 10, 1000, 100, step=10, key="entity_slider")
     
-    analyze_key = f"analyze_{datetime.now().timestamp()}"
-    if st.button("📊 分析性能", key=analyze_key):
+    if st.button("📊 分析性能", key="analyze_btn"):
         with st.spinner("正在分析..."):
             result = analyze_performance(ai_type, complexity, entity_count)
+            st.session_state.performance_result = result
             st.markdown("<h4 style='color: #fff;'>性能分析报告</h4>", unsafe_allow_html=True)
             st.write(result)
+    elif st.session_state.performance_result:
+        st.markdown("<h4 style='color: #fff;'>性能分析报告</h4>", unsafe_allow_html=True)
+        st.write(st.session_state.performance_result)
