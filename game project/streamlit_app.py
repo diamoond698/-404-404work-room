@@ -1,16 +1,12 @@
 import streamlit as st
 import requests
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 st.set_page_config(page_title="游戏AI Agent", page_icon="🎮")
 
 def call_deepseek(messages):
-    api_key = os.getenv("DEEPSEEK_API_KEY") or st.secrets.get("DEEPSEEK_API_KEY", "")
+    api_key = st.secrets.get("DEEPSEEK_API_KEY", "")
     if not api_key:
-        return "错误：请设置 DEEPSEEK_API_KEY"
+        return "错误：请在设置中添加 DEEPSEEK_API_KEY"
     
     try:
         response = requests.post(
