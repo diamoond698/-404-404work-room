@@ -36,6 +36,12 @@ st.markdown("""
         display: flex;
         justify-content: flex-end;
         margin-bottom: 16px;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     .user-content {
@@ -50,6 +56,7 @@ st.markdown("""
         display: flex;
         justify-content: flex-start;
         margin-bottom: 16px;
+        animation: fadeIn 0.3s ease;
     }
     
     .assistant-content {
@@ -150,6 +157,29 @@ st.markdown("""
         color: #ffffff !important;
         margin-bottom: 12px !important;
     }
+    
+    .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #667eea;
+        animation: typingBlink 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes typingBlink {
+        0%, 80%, 100% { opacity: 0.3; }
+        40% { opacity: 1; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -161,8 +191,6 @@ if "knowledge_base" not in st.session_state:
     st.session_state.knowledge_base = []
 if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
-if "is_thinking" not in st.session_state:
-    st.session_state.is_thinking = False
 if "code_generated" not in st.session_state:
     st.session_state.code_generated = ""
 if "performance_result" not in st.session_state:
@@ -344,12 +372,12 @@ with tab1:
                     if st.button("📋", key=f"copy_{idx}"):
                         st.success("✅ 已复制到剪贴板！")
         
-        if st.session_state.is_thinking:
+        if "is_thinking" in st.session_state and st.session_state.is_thinking:
             st.markdown(f"""
             <div class="assistant-message">
                 <div class="avatar assistant-avatar">🤖</div>
                 <div class="thinking-content">
-                    <p class="message-text">🤔 思考中...</p>
+                    <p class="message-text"><span class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span> 正在思考...</p>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -369,23 +397,28 @@ with tab1:
         
         if prompt:
             current_conv["messages"].append({"role": "user", "content": prompt})
+            st.session_state.is_thinking = True
             
-            context = ""
-            if use_knowledge and st.session_state.kb_loaded and st.session_state.knowledge_base:
-                relevant_docs = search_knowledge(prompt, top_k=3)
-                if relevant_docs:
-                    context = "\n\n".join([doc["content"] for doc in relevant_docs])
+            def get_response():
+                context = ""
+                if use_knowledge and st.session_state.kb_loaded and st.session_state.knowledge_base:
+                    relevant_docs = search_knowledge(prompt, top_k=3)
+                    if relevant_docs:
+                        context = "\n\n".join([doc["content"] for doc in relevant_docs])
+                
+                system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
+                if context:
+                    system_msg += f"\n\n参考以下知识库内容：\n{context}"
+                
+                history = [{"role": "system", "content": system_msg}]
+                for m in current_conv["messages"]:
+                    history.append({"role": m["role"], "content": m["content"]})
+                
+                answer = call_api(history, temperature)
+                current_conv["messages"].append({"role": "assistant", "content": answer})
+                st.session_state.is_thinking = False
             
-            system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
-            if context:
-                system_msg += f"\n\n参考以下知识库内容：\n{context}"
-            
-            history = [{"role": "system", "content": system_msg}]
-            for m in current_conv["messages"]:
-                history.append({"role": m["role"], "content": m["content"]})
-            
-            answer = call_api(history, temperature)
-            current_conv["messages"].append({"role": "assistant", "content": answer})
+            get_response()
 
 with tab2:
     st.markdown("<h3 style='color: #fff;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
