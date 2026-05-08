@@ -2,21 +2,145 @@ import streamlit as st
 import requests
 import json
 from typing import List, Dict
+from datetime import datetime
 
-st.set_page_config(
-    page_title="🎮 游戏AI Agent",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="🎮 游戏AI Agent", layout="wide")
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+st.markdown("""
+<style>
+    .stApp {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        min-height: 100vh;
+    }
+    
+    .stSidebar {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    .stButton>button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stTextInput>div>div>input, .stTextArea>div>textarea {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+    }
+    
+    .stChatMessage {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .stCodeBlock {
+        background: rgba(0, 0, 0, 0.3) !important;
+        border-radius: 8px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .stTab {
+        color: white !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px 8px 0 0 !important;
+    }
+    
+    .stTab[data-baseweb="tab"] {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .stTab[data-baseweb="tab"]:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .stTab[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    .stExpander {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 8px;
+    }
+    
+    .css-1cypcdb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #fff;
+        text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+    }
+    
+    p, li, label {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .stSlider>div>div>div>div {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    .stSelectbox>div>div {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+    }
+    
+    .copy-btn {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border: none;
+        border-radius: 6px;
+        padding: 6px 12px;
+        color: white;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .copy-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 10px rgba(17, 153, 142, 0.5);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+if "conversations" not in st.session_state:
+    st.session_state.conversations = [{"id": "conv_001", "name": "新对话", "messages": [], "created": datetime.now().isoformat()}]
+if "current_conv_id" not in st.session_state:
+    st.session_state.current_conv_id = "conv_001"
 if "knowledge_base" not in st.session_state:
     st.session_state.knowledge_base = []
 if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
-if "copy_success" not in st.session_state:
-    st.session_state.copy_success = {}
+if "copied_text" not in st.session_state:
+    st.session_state.copied_text = ""
+
+def copy_to_clipboard(text):
+    st.session_state.copied_text = text
+    try:
+        import pyperclip
+        pyperclip.copy(text)
+        return True
+    except ImportError:
+        return False
+
+def get_current_conversation():
+    for conv in st.session_state.conversations:
+        if conv["id"] == st.session_state.current_conv_id:
+            return conv
+    return None
 
 def load_knowledge_base():
     try:
@@ -29,7 +153,6 @@ def load_knowledge_base():
             return len(data)
         return 0
     except Exception as e:
-        st.sidebar.error(f"知识库加载失败: {str(e)}")
         return 0
 
 def search_knowledge(query: str, top_k: int = 3) -> List[Dict]:
@@ -41,14 +164,11 @@ def search_knowledge(query: str, top_k: int = 3) -> List[Dict]:
     
     for doc in st.session_state.knowledge_base:
         content = doc.get("content", "").lower()
-        metadata = doc.get("metadata", {})
-        
         score = sum(1 for keyword in query_keywords if keyword in content)
         
         if score > 0:
             scored_docs.append({
                 "content": doc["content"],
-                "metadata": metadata,
                 "score": score,
                 "id": doc.get("id", "")
             })
@@ -73,166 +193,192 @@ def call_api(messages, temperature=0.7):
             return result["choices"][0]["message"]["content"]
         elif "error" in result:
             return f"❌ API错误: {result['error'].get('message', '未知错误')}"
-        return f"❌ 响应异常: {json.dumps(result, ensure_ascii=False)}"
+        return f"❌ 响应异常"
     except Exception as e:
         return f"❌ 调用失败: {str(e)}"
 
-def copy_to_clipboard(text, key):
-    st.session_state.copy_success[key] = False
-    try:
-        import pyperclip
-        pyperclip.copy(text)
-        st.session_state.copy_success[key] = True
-    except ImportError:
-        pass
+def generate_code(prompt, language="csharp"):
+    code_prompt = f"""根据以下需求生成{language}游戏AI代码：
+
+需求描述：
+{prompt}
+
+要求：
+- 符合游戏引擎规范（Unity优先）
+- 代码结构清晰，有必要的注释
+- 返回完整可运行的代码片段
+- 包含必要的命名空间和类定义
+
+语言：{language}"""
+    
+    return call_api([{"role": "user", "content": code_prompt}], temperature=0.3)
+
+def analyze_performance(ai_type, complexity, entity_count):
+    prompts = {
+        "behavior_tree": f"分析行为树AI性能：复杂度等级{complexity}，实体数量{entity_count}。请预估CPU占用率、内存使用、推荐优化方案。",
+        "state_machine": f"分析状态机AI性能：复杂度等级{complexity}，实体数量{entity_count}。请预估CPU占用率、内存使用、推荐优化方案。",
+        "pathfinding": f"分析寻路AI性能：复杂度等级{complexity}，实体数量{entity_count}。请预估CPU占用率、内存使用、推荐优化方案。",
+        "neural_network": f"分析神经网络AI性能：复杂度等级{complexity}，实体数量{entity_count}。请预估CPU占用率、内存使用、推荐优化方案。"
+    }
+    
+    if ai_type in prompts:
+        return call_api([{"role": "user", "content": prompts[ai_type]}], temperature=0.5)
+    return "❌ 不支持的AI类型"
 
 with st.sidebar:
-    st.subheader("📚 知识库管理")
+    st.markdown("## 📝 对话列表")
+    
+    if st.button("➕ 新对话"):
+        new_id = f"conv_{len(st.session_state.conversations) + 1:03d}"
+        st.session_state.conversations.append({
+            "id": new_id,
+            "name": "新对话",
+            "messages": [],
+            "created": datetime.now().isoformat()
+        })
+        st.session_state.current_conv_id = new_id
+    
+    st.markdown("---")
+    
+    for conv in st.session_state.conversations:
+        active = "✅ " if conv["id"] == st.session_state.current_conv_id else ""
+        if st.button(f"{active}{conv['name']}", key=conv["id"], use_container_width=True):
+            st.session_state.current_conv_id = conv["id"]
+    
+    st.markdown("---")
+    st.markdown("## 📚 知识库")
     
     if not st.session_state.kb_loaded:
         if st.button("📥 加载知识库"):
-            with st.spinner("正在加载..."):
-                count = load_knowledge_base()
-                if count > 0:
-                    st.success(f"✅ 已加载 {count} 个文档")
-                    st.rerun()
-                else:
-                    st.error("❌ 加载失败")
-    else:
-        st.success(f"✅ 知识库已就绪 ({len(st.session_state.knowledge_base)} 个文档)")
-        
-        st.markdown("---")
-        st.subheader("➕ 添加知识")
-        
-        new_id = st.text_input("知识ID", value=f"doc_{len(st.session_state.knowledge_base) + 1:03d}")
-        new_content = st.text_area("知识内容", height=150, placeholder="请输入新知识内容...")
-        new_category = st.text_input("分类标签", value="未分类")
-        new_source = st.text_input("来源", value="用户添加")
-        
-        if st.button("💾 添加到知识库"):
-            if new_content.strip():
-                new_doc = {
-                    "id": new_id,
-                    "content": new_content.strip(),
-                    "metadata": {
-                        "source": new_source,
-                        "category": new_category
-                    }
-                }
-                st.session_state.knowledge_base.append(new_doc)
-                
-                updated_kb = st.session_state.knowledge_base
-                st.download_button(
-                    label="📥 下载更新后的知识库",
-                    data=json.dumps(updated_kb, ensure_ascii=False, indent=2),
-                    file_name="knowledge_base.json",
-                    mime="application/json"
-                )
-                st.success(f"✅ 已添加！请下载并上传到GitHub更新！")
+            count = load_knowledge_base()
+            if count > 0:
+                st.success(f"✅ 已加载 {count} 个文档")
             else:
-                st.error("❌ 请输入知识内容")
-        
-        st.markdown("---")
-        if st.button("🔄 重新加载知识库"):
-            st.session_state.kb_loaded = False
-            st.session_state.knowledge_base = []
-            st.rerun()
+                st.error("❌ 加载失败")
+    else:
+        st.success(f"✅ 已加载 {len(st.session_state.knowledge_base)} 个文档")
     
     st.markdown("---")
-    st.subheader("⚙️ 设置")
+    st.markdown("## ⚙️ 设置")
     temperature = st.slider("创意度", 0.0, 1.0, 0.7, 0.1)
     use_knowledge = st.checkbox("使用知识库", value=True)
     show_reasoning = st.checkbox("显示思考过程", value=True)
     show_flowchart = st.checkbox("显示流程图", value=True)
-    show_sources = st.checkbox("显示知识来源", value=True)
-    
-    st.markdown("---")
-    if st.button("🗑️ 清空对话"):
-        st.session_state.messages = []
-        st.rerun()
-    if st.button("🔄 重新生成"):
-        if st.session_state.messages:
-            st.session_state.messages.pop()
-            st.rerun()
 
-st.title("🎮 游戏AI Agent")
-st.subheader("专业的游戏AI设计顾问 - 增强版")
+st.markdown("""
+<div style="text-align: center; padding: 20px; margin-bottom: 20px;">
+    <h1 style="font-size: 2.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+        🎮 游戏AI Agent
+    </h1>
+    <p style="color: rgba(255,255,255,0.7); font-size: 1.1rem;">专业的游戏AI设计顾问 - 赛博朋克版</p>
+</div>
+""", unsafe_allow_html=True)
 
-st.markdown("---")
+tab1, tab2, tab3 = st.tabs(["💬 聊天", "🔧 代码生成", "⚡ 性能预估"])
 
-chat_container = st.container()
-with chat_container:
-    st.subheader("💬 对话")
-    
-    for i, msg in enumerate(st.session_state.messages):
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+with tab1:
+    current_conv = get_current_conversation()
+    if current_conv:
+        st.markdown(f"<h3 style='color: #fff;'>{current_conv['name']}</h3>", unsafe_allow_html=True)
+        
+        for msg in current_conv["messages"]:
+            with st.chat_message(msg["role"]):
+                st.write(msg["content"])
+                if msg["role"] == "assistant":
+                    st.code(msg["content"], language="markdown")
+        
+        prompt = st.chat_input("输入您的游戏AI问题...")
+        
+        if prompt:
+            current_conv["messages"].append({"role": "user", "content": prompt})
             
-            if msg["role"] == "assistant":
-                col_copy, col_space = st.columns([1, 4])
-                with col_copy:
-                    copy_key = f"copy_{i}"
-                    if st.button("📋 复制", key=copy_key, use_container_width=True):
-                        st.write(f"已复制到剪贴板！")
-                    if copy_key in st.session_state.copy_success and st.session_state.copy_success[copy_key]:
-                        st.success("✅ 复制成功！")
-
-st.markdown("---")
-
-prompt = st.chat_input("输入您的游戏AI问题...")
-
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.write(prompt)
-    
-    with st.chat_message("assistant"):
-        with st.spinner("🤔 思考中..."):
             context = ""
-            sources = []
-            
-            if use_knowledge and st.session_state.knowledge_base:
+            if use_knowledge and st.session_state.kb_loaded and st.session_state.knowledge_base:
                 relevant_docs = search_knowledge(prompt, top_k=3)
                 if relevant_docs:
                     context = "\n\n".join([doc["content"] for doc in relevant_docs])
-                    sources = relevant_docs
-                    if show_sources:
-                        st.info(f"📚 从知识库检索到 {len(relevant_docs)} 个相关文档")
             
             system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
             if context:
-                system_msg += f"\n\n参考以下知识库内容回答问题：\n{context}"
+                system_msg += f"\n\n参考以下知识库内容：\n{context}"
             
             history = [{"role": "system", "content": system_msg}]
-            history += st.session_state.messages[:-1]
-            history.append({"role": "user", "content": prompt})
+            for m in current_conv["messages"]:
+                history.append({"role": m["role"], "content": m["content"]})
             
-            final_answer = call_api(history, temperature)
-            st.write(final_answer)
+            with st.chat_message("assistant"):
+                with st.spinner("思考中..."):
+                    answer = call_api(history, temperature)
+                    st.write(answer)
+                    
+                    if show_reasoning:
+                        with st.expander("🧠 思考过程"):
+                            reason_prompt = f"分析问题: {prompt}，请分4点回答: 1.问题分析 2.信息检索 3.推理步骤 4.结论形成"
+                            reasoning = call_api([{"role": "user", "content": reason_prompt}], 0.5)
+                            st.write(reasoning)
+                    
+                    if show_flowchart:
+                        with st.expander("📊 流程图"):
+                            flowchart_prompt = f"生成Mermaid流程图代码，只输出代码。问题: {prompt} 回答: {answer}"
+                            flowchart = call_api([{"role": "user", "content": flowchart_prompt}], 0.3)
+                            st.code(flowchart, language="markdown")
+                    
+                    current_conv["messages"].append({"role": "assistant", "content": answer})
+
+with tab2:
+    st.markdown("<h3 style='color: #fff; margin-bottom: 10px;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
+    st.write("根据您的需求，自动生成游戏AI代码！")
+    
+    code_prompt = st.text_area("描述您的AI需求", height=200, placeholder="例如：创建一个Unity中的敌人巡逻AI，包含追逐玩家和攻击行为...")
+    
+    language = st.selectbox("选择语言", ["C# (Unity)", "Python", "Lua", "C++ (Unreal)"])
+    lang_map = {"C# (Unity)": "csharp", "Python": "python", "Lua": "lua", "C++ (Unreal)": "cpp"}
+    
+    if st.button("🚀 生成代码"):
+        if code_prompt.strip():
+            with st.spinner("正在生成代码..."):
+                code = generate_code(code_prompt, lang_map[language])
+                st.markdown("<h4 style='color: #fff; margin-top: 20px;'>生成的代码</h4>", unsafe_allow_html=True)
+                
+                col1, col2 = st.columns([10, 1])
+                with col1:
+                    st.code(code, language=lang_map[language])
+                with col2:
+                    if st.button("📋", key="copy_code", use_container_width=True):
+                        success = copy_to_clipboard(code)
+                        if success:
+                            st.success("✅ 已复制！")
+                        else:
+                            st.info("代码已选中，按Ctrl+C复制")
+        else:
+            st.error("请输入AI需求描述")
+
+with tab3:
+    st.markdown("<h3 style='color: #fff; margin-bottom: 10px;'>⚡ AI性能预估</h3>", unsafe_allow_html=True)
+    st.write("分析AI系统的性能消耗，提供优化建议")
+    
+    ai_type = st.selectbox("AI类型", ["behavior_tree", "state_machine", "pathfinding", "neural_network"], format_func=lambda x: {
+        "behavior_tree": "行为树",
+        "state_machine": "状态机",
+        "pathfinding": "寻路系统",
+        "neural_network": "神经网络"
+    }[x])
+    
+    complexity = st.slider("复杂度等级", 1, 5, 3, help="1=简单，5=复杂")
+    entity_count = st.slider("实体数量", 10, 1000, 100, step=10)
+    
+    if st.button("📊 分析性能"):
+        with st.spinner("正在分析..."):
+            result = analyze_performance(ai_type, complexity, entity_count)
+            st.markdown("<h4 style='color: #fff; margin-top: 20px;'>性能分析报告</h4>", unsafe_allow_html=True)
             
-            if show_sources and sources:
-                with st.expander("📖 知识来源"):
-                    for idx, doc in enumerate(sources, 1):
-                        st.markdown(f"**来源 {idx}** (相关度: {doc['score']}, ID: {doc['id']})")
-                        st.text(doc["content"][:200] + "...")
-                        st.markdown("---")
-            
-            full_response = final_answer
-            
-            if show_reasoning:
-                with st.expander("🧠 查看思考过程"):
-                    reason_prompt = f"请模拟游戏AI顾问的思考过程，分析这个问题: {prompt}。请分4点回答: 1.问题分析 2.信息检索 3.推理步骤 4.结论形成"
-                    reasoning = call_api([{"role": "user", "content": reason_prompt}], 0.5)
-                    st.write(reasoning)
-                    full_response = f"【推理过程】\n{reasoning}\n\n【最终回答】\n{final_answer}"
-            
-            if show_flowchart:
-                st.markdown("### 📊 流程图")
-                flowchart_prompt = f"请为以下问答生成Mermaid格式流程图，只输出代码。问题: {prompt} 回答: {final_answer}"
-                flowchart = call_api([{"role": "user", "content": flowchart_prompt}], 0.3)
-                st.code(flowchart, language="markdown")
-                st.info("提示: 将Mermaid代码复制到 https://mermaid.live 可查看图表")
-                full_response = f"{full_response}\n\n【流程图】\n{flowchart}"
-            
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            st.rerun()
+            col1, col2 = st.columns([10, 1])
+            with col1:
+                st.write(result)
+            with col2:
+                if st.button("📋", key="copy_report", use_container_width=True):
+                    success = copy_to_clipboard(result)
+                    if success:
+                        st.success("✅ 已复制！")
+                    else:
+                        st.info("报告已选中，按Ctrl+C复制")
