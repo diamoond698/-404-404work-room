@@ -14,10 +14,9 @@ class GameAIAgent:
         """运行Agent处理查询"""
         try:
             context = self.knowledge_tool.func(query)
-            has_context = len(context.strip()) > 0
             
             messages = [
-                {"role": "system", "content": "你是一个专业的游戏AI顾问。请根据以下参考资料回答问题。如果参考资料中没有相关信息，请基于你的知识回答。\n【参考资料】：\n" + context}
+                {"role": "system", "content": "你是一个专业的游戏AI顾问，擅长回答关于游戏AI设计和实现的问题。"}
             ]
             
             messages.extend(self.conversation_history)
@@ -127,10 +126,8 @@ flowchart TD
             last_user_message = self.conversation_history[-2]
             query = last_user_message["content"]
             
-            context = self.knowledge_tool.func(query)
-            
             messages = [
-                {"role": "system", "content": "你是一个专业的游戏AI顾问。请根据以下参考资料回答问题。如果参考资料中没有相关信息，请基于你的知识回答。\n【参考资料】：\n" + context}
+                {"role": "system", "content": "你是一个专业的游戏AI顾问，擅长回答关于游戏AI设计和实现的问题。"}
             ]
             
             messages.extend(self.conversation_history[:-1])
