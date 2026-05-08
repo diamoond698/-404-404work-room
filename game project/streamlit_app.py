@@ -1,6 +1,10 @@
 import streamlit as st
-from game_plan.ai_agent.agent import GameAIAgent
+import requests
+import os
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 st.set_page_config(
     page_title="游戏AI Agent",
@@ -8,11 +12,89 @@ st.set_page_config(
     layout="wide"
 )
 
-if 'agent' not in st.session_state:
-    st.session_state.agent = GameAIAgent()
+def call_deepseek(messages):
+    api_key = os.getenv("DEEPSEEK_API_KEY") or st.secrets.get("DEEPSEEK_API_KEY")
+    if not api_key:
+        return "错误：请设置 DEEPSEEK_API_KEY"
+    
+    try:
+        response = requests.post(
+            "https://api.deepseek.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "deepseek-chat",
+                "messages": messages,
+                "temperature": 0.7
+            },
+            timeout=60
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"LLM调用失败：{str(e)}"
 
-if 'history' not in st.session_state:
-    st.session_state.history = []
+def generate_response(query, conversation_history, include_flowchart=True, include_reasoning=True):
+    messages = [
+        {"role": "system", "content": "你是一个专业的游戏AI顾问，擅长回答关于游戏AI设计和实现的问题。"}
+    ]
+    
+    messages.extend(conversation_history)
+    messages.append({"role": "user", "content": query})
+    
+    reasoning = ""
+    if include_reasoning:
+        reasoning_prompt = f"""请模拟一个游戏AI顾问的思考过程，详细描述你是如何分析问题并得出答案的。
+
+问题：{query}
+
+请按照以下结构输出推理过程：
+1. 问题分析：分析用户的问题意图和核心需求
+2. 信息检索：从知识库中检索到的相关信息
+3. 推理步骤：一步步推导答案的过程
+4. 结论形成：最终答案的形成逻辑
+
+请用中文详细描述，语言要自然，像真实的思考过程："""
+        
+        reasoning = call_deepseek([{"role": "user", "content": reasoning_prompt}])
+    
+    response = call_deepseek(messages)
+    
+    flowchart = ""
+    if include_flowchart:
+        flowchart_prompt = f"""请为以下问答生成一个Mermaid格式的流程图。
+
+问题：{query}
+
+回答：{response}
+
+要求：
+1. 使用Mermaid的flowchart语法
+2. 流程图应清晰展示回答中的核心逻辑或步骤
+3. 使用简洁的节点标签
+4. 只输出Mermaid代码，不要有其他解释文字
+
+示例格式：
+```mermaid
+flowchart TD
+    A[开始] --> B[步骤1]
+    B --> C[步骤2]
+    C --> D[结束]
+```
+
+请输出Mermaid代码："""
+        
+        flowchart = call_deepseek([{"role": "user", "content": flowchart_prompt}])
+    
+    full_response = response
+    if reasoning:
+        full_response = f"【推理过程】\n{reasoning}\n\n【最终回答】\n{response}"
+    if flowchart and ("mermaid" in flowchart or "flowchart" in flowchart):
+        full_response = f"{full_response}\n\n【流程图】\n{flowchart}"
+    
+    return full_response
 
 def extract_components(response):
     reasoning = ""
@@ -42,14 +124,16 @@ def extract_components(response):
     
     return reasoning, final_answer, flowchart
 
+if 'history' not in st.session_state:
+    st.session_state.history = []
+
 st.sidebar.title("🎮 游戏AI Agent")
 st.sidebar.markdown("---")
 
 st.sidebar.subheader("使用说明")
 st.sidebar.markdown("1. 在聊天框中输入您的游戏AI相关问题")
-st.sidebar.markdown("2. AI Agent会从知识库中检索相关信息")
-st.sidebar.markdown("3. 基于检索到的信息生成专业回答")
-st.sidebar.markdown("4. 可以继续追问，AI会记住上下文")
+st.sidebar.markdown("2. AI会生成专业回答")
+st.sidebar.markdown("3. 可以继续追问，AI会记住上下文")
 st.sidebar.markdown("---")
 
 st.sidebar.subheader("示例问题")
@@ -65,7 +149,6 @@ for q in example_questions:
         st.session_state.user_input = q
 
 if st.sidebar.button("🔄 清除对话历史"):
-    st.session_state.agent.clear_history()
     st.session_state.history = []
     st.experimental_rerun()
 
@@ -101,7 +184,11 @@ if user_input:
     
     with st.chat_message("assistant"):
         with st.spinner("思考中..."):
-            response = st.session_state.agent.run(user_input)
+            conversation_history = [
+                {"role": m['role'], "content": m['content']} 
+                for m in st.session_state.history[:-1]
+            ]
+            response = generate_response(user_input, conversation_history)
         
         reasoning, final_answer, flowchart = extract_components(response)
         
