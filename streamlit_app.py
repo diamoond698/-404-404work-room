@@ -191,6 +191,8 @@ if "knowledge_base" not in st.session_state:
     st.session_state.knowledge_base = []
 if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
+if "pending_prompt" not in st.session_state:
+    st.session_state.pending_prompt = None
 if "code_generated" not in st.session_state:
     st.session_state.code_generated = ""
 if "performance_result" not in st.session_state:
@@ -372,8 +374,17 @@ with tab1:
                     if st.button("📋", key=f"copy_{idx}"):
                         st.success("✅ 已复制到剪贴板！")
         
-        if "is_thinking" in st.session_state and st.session_state.is_thinking:
+        is_thinking = False
+        pending_prompt = st.session_state.pending_prompt
+        if pending_prompt:
+            is_thinking = True
             st.markdown(f"""
+            <div class="user-message">
+                <div class="user-content">
+                    <p class="message-text">{pending_prompt}</p>
+                </div>
+                <div class="avatar user-avatar">👤</div>
+            </div>
             <div class="assistant-message">
                 <div class="avatar assistant-avatar">🤖</div>
                 <div class="thinking-content">
@@ -396,29 +407,30 @@ with tab1:
         """, unsafe_allow_html=True)
         
         if prompt:
-            current_conv["messages"].append({"role": "user", "content": prompt})
-            st.session_state.is_thinking = True
+            if not pending_prompt:
+                st.session_state.pending_prompt = prompt
+                st.rerun()
+        elif pending_prompt:
+            current_conv["messages"].append({"role": "user", "content": pending_prompt})
             
-            def get_response():
-                context = ""
-                if use_knowledge and st.session_state.kb_loaded and st.session_state.knowledge_base:
-                    relevant_docs = search_knowledge(prompt, top_k=3)
-                    if relevant_docs:
-                        context = "\n\n".join([doc["content"] for doc in relevant_docs])
-                
-                system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
-                if context:
-                    system_msg += f"\n\n参考以下知识库内容：\n{context}"
-                
-                history = [{"role": "system", "content": system_msg}]
-                for m in current_conv["messages"]:
-                    history.append({"role": m["role"], "content": m["content"]})
-                
-                answer = call_api(history, temperature)
-                current_conv["messages"].append({"role": "assistant", "content": answer})
-                st.session_state.is_thinking = False
+            context = ""
+            if use_knowledge and st.session_state.kb_loaded and st.session_state.knowledge_base:
+                relevant_docs = search_knowledge(pending_prompt, top_k=3)
+                if relevant_docs:
+                    context = "\n\n".join([doc["content"] for doc in relevant_docs])
             
-            get_response()
+            system_msg = "你是专业游戏AI顾问，擅长游戏AI设计和实现。"
+            if context:
+                system_msg += f"\n\n参考以下知识库内容：\n{context}"
+            
+            history = [{"role": "system", "content": system_msg}]
+            for m in current_conv["messages"]:
+                history.append({"role": m["role"], "content": m["content"]})
+            
+            answer = call_api(history, temperature)
+            current_conv["messages"].append({"role": "assistant", "content": answer})
+            st.session_state.pending_prompt = None
+            st.rerun()
 
 with tab2:
     st.markdown("<h3 style='color: #fff;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
