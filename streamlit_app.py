@@ -61,6 +61,15 @@ st.markdown("""
         backdrop-filter: blur(10px);
     }
     
+    .thinking-content {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px dashed rgba(102, 126, 234, 0.5);
+        border-radius: 16px 16px 16px 4px;
+        padding: 16px 20px;
+        max-width: 70%;
+        backdrop-filter: blur(10px);
+    }
+    
     .avatar {
         width: 48px;
         height: 48px;
@@ -154,8 +163,6 @@ if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
 if "is_thinking" not in st.session_state:
     st.session_state.is_thinking = False
-if "last_answer" not in st.session_state:
-    st.session_state.last_answer = ""
 
 def get_current_conversation():
     for conv in st.session_state.conversations:
@@ -256,7 +263,8 @@ with st.sidebar:
     
     st.markdown('<div class="sidebar-title">📝 对话列表</div>', unsafe_allow_html=True)
     
-    if st.button("➕ 新对话"):
+    new_conv_key = f"new_conv_{datetime.now().timestamp()}"
+    if st.button("➕ 新对话", key=new_conv_key):
         new_id = f"conv_{len(st.session_state.conversations) + 1:03d}"
         st.session_state.conversations.append({
             "id": new_id,
@@ -268,16 +276,18 @@ with st.sidebar:
     
     st.markdown("---")
     
-    for conv in st.session_state.conversations:
+    for idx, conv in enumerate(st.session_state.conversations):
         active = "✅ " if conv["id"] == st.session_state.current_conv_id else ""
-        if st.button(f"{active}{conv['name']}", key=conv["id"], use_container_width=True):
+        conv_key = f"conv_btn_{conv['id']}_{idx}"
+        if st.button(f"{active}{conv['name']}", key=conv_key, use_container_width=True):
             st.session_state.current_conv_id = conv["id"]
     
     st.markdown("---")
     st.markdown('<div class="sidebar-title">📚 知识库</div>', unsafe_allow_html=True)
     
     if not st.session_state.kb_loaded:
-        if st.button("📥 加载知识库"):
+        load_kb_key = f"load_kb_{datetime.now().timestamp()}"
+        if st.button("📥 加载知识库", key=load_kb_key):
             count = load_knowledge_base()
             if count > 0:
                 st.success(f"✅ 已加载 {count} 个文档")
@@ -307,6 +317,7 @@ with tab1:
     if current_conv:
         st.markdown(f"<h3 style='color: #fff; margin-bottom: 20px;'>{current_conv['name']}</h3>", unsafe_allow_html=True)
         
+        msg_index = 0
         for msg in current_conv["messages"]:
             if msg["role"] == "user":
                 st.markdown(f"""
@@ -327,12 +338,23 @@ with tab1:
                 </div>
                 """, unsafe_allow_html=True)
                 
+                copy_key = f"copy_btn_{current_conv['id']}_{msg_index}"
                 col_copy = st.columns([10, 1])
                 with col_copy[1]:
-                    copy_key = f"copy_{len(current_conv['messages'])}"
                     if st.button("📋", key=copy_key, use_container_width=True):
                         st.session_state.last_answer = msg["content"]
                         st.success("✅ 已复制到剪贴板！")
+            msg_index += 1
+        
+        if st.session_state.is_thinking:
+            st.markdown(f"""
+            <div class="assistant-message">
+                <div class="avatar assistant-avatar">🤖</div>
+                <div class="thinking-content">
+                    <p class="message-text">🤔 思考中...</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="chat-input-area">
@@ -349,6 +371,7 @@ with tab1:
         
         if prompt:
             current_conv["messages"].append({"role": "user", "content": prompt})
+            st.session_state.is_thinking = True
             
             context = ""
             if use_knowledge and st.session_state.kb_loaded and st.session_state.knowledge_base:
@@ -366,6 +389,7 @@ with tab1:
             
             answer = call_api(history, temperature)
             current_conv["messages"].append({"role": "assistant", "content": answer})
+            st.session_state.is_thinking = False
 
 with tab2:
     st.markdown("<h3 style='color: #fff;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
@@ -376,7 +400,8 @@ with tab2:
     language = st.selectbox("选择语言", ["C# (Unity)", "Python", "Lua", "C++ (Unreal)"])
     lang_map = {"C# (Unity)": "csharp", "Python": "python", "Lua": "lua", "C++ (Unreal)": "cpp"}
     
-    if st.button("🚀 生成代码"):
+    gen_code_key = f"gen_code_{datetime.now().timestamp()}"
+    if st.button("🚀 生成代码", key=gen_code_key):
         if code_prompt.strip():
             with st.spinner("正在生成代码..."):
                 code = generate_code(code_prompt, lang_map[language])
@@ -399,7 +424,8 @@ with tab3:
     complexity = st.slider("复杂度等级", 1, 5, 3, help="1=简单，5=复杂")
     entity_count = st.slider("实体数量", 10, 1000, 100, step=10)
     
-    if st.button("📊 分析性能"):
+    analyze_key = f"analyze_{datetime.now().timestamp()}"
+    if st.button("📊 分析性能", key=analyze_key):
         with st.spinner("正在分析..."):
             result = analyze_performance(ai_type, complexity, entity_count)
             st.markdown("<h4 style='color: #fff;'>性能分析报告</h4>", unsafe_allow_html=True)
