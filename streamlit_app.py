@@ -11,11 +11,14 @@ st.markdown("""
     .stApp {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
     }
     
     .stSidebar {
         background: rgba(255, 255, 255, 0.05) !important;
         backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .stButton>button {
@@ -31,51 +34,87 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
     
-    .stTextInput>div>div>input, .stTextArea>div>textarea {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: white;
+    .user-message {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 16px;
     }
     
-    .stChatMessage {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
+    .user-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px 16px 4px 16px;
+        padding: 16px 20px;
+        max-width: 70%;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .assistant-message {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 16px;
+    }
+    
+    .assistant-content {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px 16px 16px 4px;
+        padding: 16px 20px;
+        max-width: 70%;
+        backdrop-filter: blur(10px);
+    }
+    
+    .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin: 0 12px;
+        flex-shrink: 0;
+    }
+    
+    .user-avatar {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .assistant-avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .message-text {
+        color: white;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+    
+    .chat-input {
+        position: fixed;
+        bottom: 0;
+        left: 240px;
+        right: 0;
+        background: rgba(26, 26, 46, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 16px 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 100;
+    }
+    
+    .stTextInput>div>div>input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        color: white;
+        padding: 12px 20px;
+        font-size: 15px;
     }
     
     .stCodeBlock {
-        background: rgba(0, 0, 0, 0.3) !important;
+        background: rgba(0, 0, 0, 0.4) !important;
         border-radius: 8px;
         border: 1px solid rgba(102, 126, 234, 0.3);
-    }
-    
-    .stTab {
-        color: white !important;
-        background: rgba(255, 255, 255, 0.1) !important;
-        border-radius: 8px 8px 0 0 !important;
-    }
-    
-    .stTab[data-baseweb="tab"] {
-        background: rgba(255, 255, 255, 0.1) !important;
-    }
-    
-    .stTab[data-baseweb="tab"]:hover {
-        background: rgba(255, 255, 255, 0.2) !important;
-    }
-    
-    .stTab[data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    }
-    
-    .stExpander {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-radius: 8px;
-    }
-    
-    .css-1cypcdb {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin-top: 12px;
     }
     
     h1, h2, h3, h4, h5, h6 {
@@ -98,6 +137,22 @@ st.markdown("""
         color: white;
     }
     
+    .stExpander {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
+    
+    .stTab[data-baseweb="tab"] {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 8px 8px 0 0 !important;
+    }
+    
+    .stTab[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
     .copy-btn {
         background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
         border: none;
@@ -106,12 +161,7 @@ st.markdown("""
         color: white;
         font-size: 12px;
         cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .copy-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 2px 10px rgba(17, 153, 142, 0.5);
+        margin-top: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -124,17 +174,6 @@ if "knowledge_base" not in st.session_state:
     st.session_state.knowledge_base = []
 if "kb_loaded" not in st.session_state:
     st.session_state.kb_loaded = False
-if "copied_text" not in st.session_state:
-    st.session_state.copied_text = ""
-
-def copy_to_clipboard(text):
-    st.session_state.copied_text = text
-    try:
-        import pyperclip
-        pyperclip.copy(text)
-        return True
-    except ImportError:
-        return False
 
 def get_current_conversation():
     for conv in st.session_state.conversations:
@@ -279,15 +318,42 @@ tab1, tab2, tab3 = st.tabs(["💬 聊天", "🔧 代码生成", "⚡ 性能预�
 with tab1:
     current_conv = get_current_conversation()
     if current_conv:
-        st.markdown(f"<h3 style='color: #fff;'>{current_conv['name']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color: #fff; margin-bottom: 20px;'>{current_conv['name']}</h3>", unsafe_allow_html=True)
         
-        for msg in current_conv["messages"]:
-            with st.chat_message(msg["role"]):
-                st.write(msg["content"])
-                if msg["role"] == "assistant":
-                    st.code(msg["content"], language="markdown")
+        chat_container = st.container()
+        with chat_container:
+            for msg in current_conv["messages"]:
+                if msg["role"] == "user":
+                    st.markdown(f"""
+                    <div class="user-message">
+                        <div class="user-content">
+                            <p class="message-text">{msg['content']}</p>
+                        </div>
+                        <div class="avatar user-avatar">👤</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="assistant-message">
+                        <div class="avatar assistant-avatar">🤖</div>
+                        <div class="assistant-content">
+                            <p class="message-text">{msg['content']}</p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="chat-input">
+            <div style="max-width: 800px; margin: 0 auto;">
+        """, unsafe_allow_html=True)
         
         prompt = st.chat_input("输入您的游戏AI问题...")
+        
+        st.markdown("""
+            </div>
+        </div>
+        <div style="height: 80px;"></div>
+        """, unsafe_allow_html=True)
         
         if prompt:
             current_conv["messages"].append({"role": "user", "content": prompt})
@@ -306,24 +372,8 @@ with tab1:
             for m in current_conv["messages"]:
                 history.append({"role": m["role"], "content": m["content"]})
             
-            with st.chat_message("assistant"):
-                with st.spinner("思考中..."):
-                    answer = call_api(history, temperature)
-                    st.write(answer)
-                    
-                    if show_reasoning:
-                        with st.expander("🧠 思考过程"):
-                            reason_prompt = f"分析问题: {prompt}，请分4点回答: 1.问题分析 2.信息检索 3.推理步骤 4.结论形成"
-                            reasoning = call_api([{"role": "user", "content": reason_prompt}], 0.5)
-                            st.write(reasoning)
-                    
-                    if show_flowchart:
-                        with st.expander("📊 流程图"):
-                            flowchart_prompt = f"生成Mermaid流程图代码，只输出代码。问题: {prompt} 回答: {answer}"
-                            flowchart = call_api([{"role": "user", "content": flowchart_prompt}], 0.3)
-                            st.code(flowchart, language="markdown")
-                    
-                    current_conv["messages"].append({"role": "assistant", "content": answer})
+            answer = call_api(history, temperature)
+            current_conv["messages"].append({"role": "assistant", "content": answer})
 
 with tab2:
     st.markdown("<h3 style='color: #fff; margin-bottom: 10px;'>🔧 AI代码生成器</h3>", unsafe_allow_html=True)
@@ -339,17 +389,7 @@ with tab2:
             with st.spinner("正在生成代码..."):
                 code = generate_code(code_prompt, lang_map[language])
                 st.markdown("<h4 style='color: #fff; margin-top: 20px;'>生成的代码</h4>", unsafe_allow_html=True)
-                
-                col1, col2 = st.columns([10, 1])
-                with col1:
-                    st.code(code, language=lang_map[language])
-                with col2:
-                    if st.button("📋", key="copy_code", use_container_width=True):
-                        success = copy_to_clipboard(code)
-                        if success:
-                            st.success("✅ 已复制！")
-                        else:
-                            st.info("代码已选中，按Ctrl+C复制")
+                st.code(code, language=lang_map[language])
         else:
             st.error("请输入AI需求描述")
 
@@ -371,14 +411,4 @@ with tab3:
         with st.spinner("正在分析..."):
             result = analyze_performance(ai_type, complexity, entity_count)
             st.markdown("<h4 style='color: #fff; margin-top: 20px;'>性能分析报告</h4>", unsafe_allow_html=True)
-            
-            col1, col2 = st.columns([10, 1])
-            with col1:
-                st.write(result)
-            with col2:
-                if st.button("📋", key="copy_report", use_container_width=True):
-                    success = copy_to_clipboard(result)
-                    if success:
-                        st.success("✅ 已复制！")
-                    else:
-                        st.info("报告已选中，按Ctrl+C复制")
+            st.write(result)
