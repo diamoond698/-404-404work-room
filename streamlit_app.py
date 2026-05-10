@@ -158,6 +158,28 @@ st.markdown("""
         margin-bottom: 12px !important;
     }
     
+    .agent-avatar-designer {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .agent-avatar-coder {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .agent-avatar-perf {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .agent-avatar-tester {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    
+    .agent-name {
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    
     .typing-indicator {
         display: inline-flex;
         align-items: center;
@@ -183,6 +205,34 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Agent角色定义
+AGENTS = {
+    "designer": {
+        "name": "游戏设计师",
+        "avatar": "👩‍🎨",
+        "color": "designer",
+        "system_prompt": "你是资深游戏设计师，擅长AI系统设计、玩法分析和创意构思。请从设计角度提供专业建议。"
+    },
+    "coder": {
+        "name": "代码专家",
+        "avatar": "🧑‍💻",
+        "color": "coder",
+        "system_prompt": "你是Unity和游戏开发专家，擅长编写高效、可维护的游戏AI代码。请提供具体的代码实现。"
+    },
+    "perf": {
+        "name": "性能专家",
+        "avatar": "🚀",
+        "color": "perf",
+        "system_prompt": "你是性能优化专家，擅长分析和优化AI系统的性能瓶颈。请提供性能分析和优化建议。"
+    },
+    "tester": {
+        "name": "测试专家",
+        "avatar": "🔬",
+        "color": "tester",
+        "system_prompt": "你是游戏测试专家，擅长发现和分析AI系统的潜在问题。请提供测试方案和问题反馈。"
+    }
+}
+
 if "conversations" not in st.session_state:
     st.session_state.conversations = [{"id": "conv_001", "name": "新对话", "messages": [], "created": datetime.now().isoformat()}]
 if "current_conv_id" not in st.session_state:
@@ -197,6 +247,10 @@ if "code_generated" not in st.session_state:
     st.session_state.code_generated = ""
 if "performance_result" not in st.session_state:
     st.session_state.performance_result = ""
+if "collab_messages" not in st.session_state:
+    st.session_state.collab_messages = []
+if "collab_in_progress" not in st.session_state:
+    st.session_state.collab_in_progress = False
 
 def get_current_conversation():
     for conv in st.session_state.conversations:
@@ -288,6 +342,50 @@ def analyze_performance(ai_type, complexity, entity_count):
         return call_api([{"role": "user", "content": prompts[ai_type]}], temperature=0.5)
     return "❌ 不支持的AI类型"
 
+def run_agent_collaboration(user_prompt, selected_agents):
+    """运行多Agent协作"""
+    messages = []
+    
+    # 添加用户消息
+    messages.append({
+        "role": "user",
+        "agent": None,
+        "content": user_prompt
+    })
+    
+    context = ""
+    
+    for agent_key in selected_agents:
+        agent = AGENTS[agent_key]
+        
+        # 构建该Agent的消息
+        prompt = f"""用户需求：{user_prompt}
+        
+之前的讨论内容：
+{context}
+
+请基于以上信息，从您的专业角度给出建议。"""
+        
+        agent_messages = [
+            {"role": "system", "content": agent["system_prompt"]},
+            {"role": "user", "content": prompt}
+        ]
+        
+        # 调用API获取Agent响应
+        response = call_api(agent_messages, temperature=0.7)
+        
+        # 添加到消息
+        messages.append({
+            "role": "assistant",
+            "agent": agent_key,
+            "content": response
+        })
+        
+        # 更新上下文
+        context += f"\n\n【{agent['name']}】\n{response}"
+    
+    return messages
+
 with st.sidebar:
     st.markdown("""
     <div style="text-align: center; margin-bottom: 16px;">
@@ -342,7 +440,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["💬 聊天", "🔧 代码生成", "⚡ 性能预估"])
+tab1, tab2, tab3, tab4 = st.tabs(["💬 聊天", "🔧 代码生成", "⚡ 性能预估", "🤝 Agent协作"])
 
 with tab1:
     current_conv = get_current_conversation()
@@ -478,3 +576,126 @@ with tab3:
     elif st.session_state.performance_result:
         st.markdown("<h4 style='color: #fff;'>性能分析报告</h4>", unsafe_allow_html=True)
         st.write(st.session_state.performance_result)
+
+with tab4:
+    st.markdown("<h3 style='color: #fff;'>🤝 多Agent协作</h3>", unsafe_allow_html=True)
+    st.write("让多个专业Agent一起协作，为您提供更全面的解决方案！")
+    
+    # Agent选择
+    st.markdown("<h4 style='color: #fff;'>选择参与协作的Agent</h4>", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        use_designer = st.checkbox("🎨 游戏设计师", value=True)
+        use_coder = st.checkbox("💻 代码专家", value=True)
+    with col2:
+        use_perf = st.checkbox("⚡ 性能专家", value=True)
+        use_tester = st.checkbox("🧪 测试专家", value=True)
+    
+    # 收集选中的Agent
+    selected_agents = []
+    if use_designer:
+        selected_agents.append("designer")
+    if use_coder:
+        selected_agents.append("coder")
+    if use_perf:
+        selected_agents.append("perf")
+    if use_tester:
+        selected_agents.append("tester")
+    
+    # 显示Agent信息
+    st.markdown("<h4 style='color: #fff; margin-top: 20px;'>Agent角色介绍</h4>", unsafe_allow_html=True)
+    
+    for agent_key in AGENTS:
+        agent = AGENTS[agent_key]
+        st.markdown(f"""
+        <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    {agent['avatar']}
+                </div>
+                <div>
+                    <div style="color: #fff; font-weight: bold;">{agent['name']}</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 12px;">{agent['system_prompt'][:80]}...</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # 用户输入
+    st.markdown("<h4 style='color: #fff; margin-top: 20px;'>描述您的需求</h4>", unsafe_allow_html=True)
+    
+    collab_prompt = st.text_area("需求描述", height=120, placeholder="例如：我需要设计一个敌人巡逻+追击的AI系统，包括行为树设计和Unity代码实现...", key="collab_prompt")
+    
+    # 显示之前的协作对话
+    if st.session_state.collab_messages:
+        st.markdown("<h4 style='color: #fff; margin-top: 20px;'>协作对话</h4>", unsafe_allow_html=True)
+        
+        for idx, msg in enumerate(st.session_state.collab_messages):
+            if msg["role"] == "user":
+                st.markdown(f"""
+                <div class="user-message">
+                    <div class="user-content">
+                        <p class="message-text">{msg['content']}</p>
+                    </div>
+                    <div class="avatar user-avatar">👤</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                agent_key = msg["agent"]
+                agent = AGENTS.get(agent_key, {"name": "Agent", "avatar": "🤖"})
+                
+                st.markdown(f"""
+                <div class="assistant-message">
+                    <div class="avatar agent-avatar-{agent['color']}">{agent['avatar']}</div>
+                    <div class="assistant-content">
+                        <div class="agent-name" style="color: rgba(255,255,255,0.7);">{agent['name']}</div>
+                        <p class="message-text">{msg['content']}</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col_copy = st.columns([10, 1])
+                with col_copy[1]:
+                    if st.button("📋", key=f"collab_copy_{idx}"):
+                        st.success("✅ 已复制到剪贴板！")
+    
+    # 显示思考中状态
+    if st.session_state.collab_in_progress:
+        st.markdown("""
+        <div class="assistant-message">
+            <div class="avatar assistant-avatar">🤖</div>
+            <div class="thinking-content">
+                <p class="message-text"><span class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span> Agent们正在热烈讨论中...</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # 开始协作按钮
+    if st.button("🚀 开始协作", key="start_collab", type="primary"):
+        if not collab_prompt.strip():
+            st.error("请先描述您的需求！")
+        elif not selected_agents:
+            st.error("请至少选择一个Agent！")
+        else:
+            # 设置思考状态
+            st.session_state.collab_in_progress = True
+            st.rerun()
+    
+    # 如果正在进行中，执行协作
+    if st.session_state.collab_in_progress and collab_prompt:
+        with st.spinner("Agent们正在协作讨论..."):
+            # 运行协作
+            collab_messages = run_agent_collaboration(collab_prompt, selected_agents)
+            
+            # 保存结果
+            st.session_state.collab_messages = collab_messages
+            st.session_state.collab_in_progress = False
+            
+            st.rerun()
+    
+    # 清空对话按钮
+    if st.session_state.collab_messages and st.button("🗑️ 清空对话", key="clear_collab"):
+        st.session_state.collab_messages = []
+        st.session_state.collab_in_progress = False
+        st.rerun()
