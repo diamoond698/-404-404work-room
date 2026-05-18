@@ -458,6 +458,8 @@
         }
 
         .avatar {
+            position: relative;
+            z-index: 10;
             width: 200px;
             height: 200px;
             border-radius: 50%;
@@ -465,6 +467,9 @@
             border: 4px solid var(--gold);
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), 0 0 60px rgba(255, 215, 0, 0.2);
             transition: transform 0.5s ease, box-shadow 0.5s ease;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .avatar:hover {
@@ -1099,7 +1104,7 @@
         <div class="hero-content">
             <div class="avatar-container">
                 <div class="avatar-border"></div>
-                <img src="images/头像.png" alt="赵思城" class="avatar">
+                <img src="images/avatar.png" alt="赵思城" class="avatar">
             </div>
             <h1 class="hero-title">趙思城</h1>
             <p class="hero-subtitle">游戏策划 / 剧情文案 / 独立游戏开发 / 新媒体内容创作</p>
@@ -1267,14 +1272,14 @@
             <h2 class="section-title">新媒体运营</h2>
             <div class="social-grid">
                 <div class="social-stats-card">
-                    <img src="images/图片1.png" alt="视频数据概览">
+                    <img src="images/stats1.png" alt="视频数据概览">
                     <div class="social-stats-info">
                         <h4>数据概览</h4>
                         <p>总播放量5万+，互动数据稳定增长</p>
                     </div>
                 </div>
                 <div class="social-stats-card">
-                    <img src="images/图片2.png" alt="作品分析">
+                    <img src="images/stats2.png" alt="作品分析">
                     <div class="social-stats-info">
                         <h4>作品分析</h4>
                         <p>爆款视频9.8万播放，获流量激励</p>
