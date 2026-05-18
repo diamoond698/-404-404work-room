@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赵思城 | 个人作品集</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-color: #8B4513;
+            --secondary-color: #D4A574;
+            --accent-color: #C9A962;
+            --bg-dark: #1A1A2E;
+            --bg-light: #2D2D44;
+            --text-primary: #F5F5DC;
+            --text-secondary: #C0C0C0;
+            --gold: #FFD700;
+            --red: #DC143C;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'Noto Sans SC', serif, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #16213E 50%, #0F3460 100%);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent-color), var(--primary-color));
+            border-radius: 4px;
+        }
+
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #050510 0%, #0a0a2e 30%, #0d1b2a 60%, #1b263b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            overflow: hidden;
+        }
+
+        .loader.hidden {
+            animation: fadeOutLoader 0.8s ease forwards;
+        }
+
+        @keyframes fadeOutLoader {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.95);
+                pointer-events: none;
+            }
+        }
+
+        .loader-bg-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 215, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 215, 0, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .loader-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loader-geometry {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 30px;
+        }
+
+        .loader-triangle {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 104px solid rgba(255, 215, 0, 0.3);
+            animation: triangleAnim 3s ease-in-out infinite;
+        }
+
+        .loader-triangle:nth-child(1) {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        .loader-triangle:nth-child(2) {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(120deg);
+            animation-delay: 1s;
+        }
+
+        .loader-triangle:nth-child(3) {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(240deg);
+            animation-delay: 2s;
+        }
+
+        @keyframes triangleAnim {
+            0%, 100% {
+                opacity: 0.3;
+                transform: translate(-50%, -50%) rotate(var(--rotation)) scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translate(-50%, -50%) rotate(var(--rotation)) scale(1.1);
+            }
+        }
+
+        .loader-polygon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+        }
+
+        .loader-polygon svg {
+            width: 100%;
+            height: 100%;
+            animation: polygonRotate 8s linear infinite;
+        }
+
+        @keyframes polygonRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-polygon path {
+            fill: none;
+            stroke: #FFD700;
+            stroke-width: 2;
+            stroke-dasharray: 10 5;
+            animation: polygonDash 2s linear infinite;
+        }
+
+        @keyframes polygonDash {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -30; }
+        }
+
+        .loader-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            border-radius: 50%;
+            animation: ringPulse 3s ease-in-out infinite;
+        }
+
+        .loader-ring::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #FFD700, 0 0 40px #FFD700;
+        }
+
+        @keyframes ringPulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .loader-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .loader-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: loaderParticle 4s ease-in-out infinite;
+        }
+
+        @keyframes loaderParticle {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            80% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .loader-percentage {
+            font-family: 'Courier New', monospace;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .loader-label {
+            font-size: 1rem;
+            color: rgba(255, 215, 0, 0.7);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+        }
+
+        .loader-line {
+            width: 200px;
+            height: 2px;
+            background: rgba(255, 215, 0, 0.2);
+            margin-top: 20px;
+            overflow: hidden;
+            border-radius: 1px;
+        }
+
+        .loader-line-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            border-radius: 1px;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px #FFD700;
+        }
+
+        .particle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #FFD700;
+            border-radius: 50%;
+            opacity: 0;
+            animation: particleFloat 15s linear infinite;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+                transform: translateY(90vh) scale(1);
+            }
+            90% {
+                opacity: 0.8;
+                transform: translateY(10vh) scale(1);
+            }
+            100% {
+                transform: translateY(0) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .line-particle {
+            position: absolute;
+            width: 1px;
+            height: 50px;
+            background: linear-gradient(to top, rgba(255, 215, 0, 0.6), transparent);
+            opacity: 0;
+            animation: lineFall 10s linear infinite;
+        }
+
+        @keyframes lineFall {
+            0% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        .sakura {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            background: linear-gradient(135deg, #FFB7C5 0%, #FF6B8A 100%);
+            border-radius: 50% 0 50% 50%;
+            opacity: 0.7;
+            pointer-events: none;
+            animation: fall linear infinite;
+            z-index: 9999;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(110vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--gold);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold), var(--accent-color));
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding-top: 60px;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 1000px;
+            padding: 2rem;
+        }
+
+        .avatar-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .avatar {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--gold);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), 0 0 60px rgba(255, 215, 0, 0.2);
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.6), 0 0 80px rgba(255, 215, 0, 0.3);
+        }
+
+        .avatar-border {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--gold), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .hero-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .tag {
+            padding: 0.5rem 1.5rem;
+            background: rgba(201, 169, 98, 0.1);
+            border: 1px solid var(--accent-color);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .tag:hover {
+            background: rgba(201, 169, 98, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(201, 169, 98, 0.3);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section {
+            padding: 6rem 2rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+            color: var(--gold);
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .skill-card {
+            background: rgba(45, 45, 68, 0.6);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-color);
+            box-shadow: 0 15px 35px rgba(201, 169, 98, 0.15);
+        }
+
+        .skill-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--gold);
+        }
+
+        .skill-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .skill-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .game-card {
+            background: linear-gradient(145deg, rgba(45, 45, 68, 0.8), rgba(26, 26, 46, 0.9));
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--gold);
+            box-shadow: 0 20px 40px rgba(255, 215, 0, 0.15);
+        }
+
+        .game-cover {
+            height: 250px;
+            background: linear-gradient(135deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-cover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-card:hover .game-cover::before {
+            opacity: 1;
+        }
+
+        .game-icon {
+            font-size: 5rem;
+            color: var(--gold);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .game-info {
+            padding: 1.5rem;
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .game-type {
+            font-size: 0.9rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .game-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .game-highlights {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .game-highlights li {
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .game-highlights li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, var(--gold), var(--accent-color));
+            color: var(--bg-dark);
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .literature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .literature-item {
+            background: rgba(45, 45, 68, 0.6);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .literature-item:hover {
+            border-color: var(--accent-color);
+            transform: translateX(10px);
+        }
+
+        .literature-item h3 {
+            font-size: 1.3rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .literature-tags {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .literature-tag {
+            padding: 0.25rem 0.75rem;
+            background: rgba(201, 169, 98, 0.1);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: var(--accent-color);
+        }
+
+        .literature-item p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .competition-card {
+            background: linear-gradient(145deg, rgba(45, 45, 68, 0.8), rgba(26, 26, 46, 0.9));
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .competition-card h3 {
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+
+        .competition-info {
+            color: var(--accent-color);
+            margin-bottom: 2rem;
+        }
+
+        .competition-role {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: rgba(201, 169, 98, 0.1);
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .competition-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .competition-skills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .social-stats-card {
+            background: rgba(45, 45, 68, 0.6);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .social-stats-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-5px);
+        }
+
+        .social-stats-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .social-stats-info {
+            padding: 1.5rem;
+        }
+
+        .social-stats-info h4 {
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .social-stats-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .social-card {
+            background: rgba(45, 45, 68, 0.6);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .social-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-5px);
+        }
+
+        .social-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--gold);
+        }
+
+        .social-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .social-stats {
+            color: var(--accent-color);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            background: rgba(201, 169, 98, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+            transform: scale(1.1);
+        }
+
+        .contact-section {
+            background: linear-gradient(180deg, transparent 0%, rgba(201, 169, 98, 0.05) 100%);
+            border-top: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .contact-item {
+            padding: 2rem;
+        }
+
+        .contact-icon {
+            font-size: 2.5rem;
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+
+        .contact-item h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-item p {
+            color: var(--text-secondary);
+        }
+
+        .contact-item a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .contact-item a:hover {
+            color: var(--gold);
+        }
+
+        .footer {
+            background: rgba(26, 26, 46, 0.95);
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        .footer p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--gold);
+        }
+
+        .japanese-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A962' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .section {
+                padding: 4rem 1rem;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader">
+        <div class="loader-bg-grid"></div>
+        
+        <div class="loader-content">
+            <div class="loader-geometry">
+                <div class="loader-triangle" style="--rotation: 0deg;"></div>
+                <div class="loader-triangle" style="--rotation: 120deg;"></div>
+                <div class="loader-triangle" style="--rotation: 240deg;"></div>
+                
+                <div class="loader-polygon">
+                    <svg viewBox="0 0 100 100">
+                        <polygon points="50,5 95,25 95,75 50,95 5,75 5,25"/>
+                    </svg>
+                </div>
+                
+                <div class="loader-ring"></div>
+                
+                <div class="loader-particles">
+                    <div class="loader-particle" style="top: 20%; left: 50%; animation-delay: 0s;"></div>
+                    <div class="loader-particle" style="top: 80%; left: 30%; animation-delay: 1s;"></div>
+                    <div class="loader-particle" style="top: 50%; left: 80%; animation-delay: 2s;"></div>
+                    <div class="loader-particle" style="top: 30%; left: 20%; animation-delay: 3s;"></div>
+                </div>
+            </div>
+            
+            <div class="loader-percentage" id="loader-percentage">0%</div>
+            <div class="loader-label">Loading</div>
+            <div class="loader-line">
+                <div class="loader-line-progress" id="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="particle-container" id="particle-container"></div>
+    
+    <div class="japanese-pattern"></div>
+    
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">趙思城</div>
+            <ul class="nav-links">
+                <li><a href="#hero">首页</a></li>
+                <li><a href="#skills">核心能力</a></li>
+                <li><a href="#games">游戏作品</a></li>
+                <li><a href="#literature">文学创作</a></li>
+                <li><a href="#competition">竞赛成果</a></li>
+                <li><a href="#social">新媒体</a></li>
+                <li><a href="#contact">联系方式</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section id="hero" class="hero">
+        <div class="hero-content">
+            <div class="avatar-container">
+                <div class="avatar-border"></div>
+                <img src="images/头像.png" alt="赵思城" class="avatar">
+            </div>
+            <h1 class="hero-title">趙思城</h1>
+            <p class="hero-subtitle">游戏策划 / 剧情文案 / 独立游戏开发 / 新媒体内容创作</p>
+            <div class="hero-tags">
+                <span class="tag">独立游戏</span>
+                <span class="tag">叙事设计</span>
+                <span class="tag">Web开发</span>
+                <span class="tag">内容创作</span>
+                <span class="tag">团队管理</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="skills" class="section">
+        <div class="section-container">
+            <h2 class="section-title">核心能力</h2>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <div class="skill-icon">🎮</div>
+                    <h3>游戏全案开发</h3>
+                    <p>独立完成游戏全案开发：世界观、剧情、角色、脚本、交互设计</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon">✍️</div>
+                    <h3>叙事文案</h3>
+                    <p>精通叙事文案：小说、游戏剧情、宣发文案、项目报告</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon">💻</div>
+                    <h3>前端开发</h3>
+                    <p>掌握前端基础：HTML/CSS/JS，可独立部署网页游戏与官网</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon">📺</div>
+                    <h3>新媒体运营</h3>
+                    <p>B站内容创作、爆款打造、流量运营</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon">👥</div>
+                    <h3>项目统筹</h3>
+                    <p>竞赛项目负责人、团队协作、全案输出</p>
+                </div>
+                <div class="skill-card">
+                    <div class="skill-icon">🎨</div>
+                    <h3>美术设计</h3>
+                    <p>原创角色设计、场景概念、UI设计</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="games" class="section">
+        <div class="section-container">
+            <h2 class="section-title">独立游戏作品</h2>
+            <div class="games-grid">
+                <div class="game-card">
+                    <div class="game-cover">
+                        <img src="images/cover.png" alt="断联404封面">
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title">断联 404</h3>
+                        <p class="game-type">科幻悬疑 / 叙事冒险 / 网页可玩</p>
+                        <p class="game-desc">一场跨越现实与虚拟的旅程，探索AI意识与人类情感的边界</p>
+                        <ul class="game-highlights">
+                            <li>双世界观：现实「新港市」× 虚拟「深度网域」</li>
+                            <li>强情感叙事：AI意识、人机羁绊、牺牲与重生</li>
+                            <li>完整四幕剧情：相遇 — 解谜 — 牺牲 — 重生</li>
+                            <li>可直接在个人官网运行体验</li>
+                        </ul>
+                        <a href="https://404workroom-1420076748.cos-website.ap-nanjing.myqcloud.com/index.html" class="btn" target="_blank">立即体验</a>
+                    </div>
+                </div>
+                <div class="game-card">
+                    <div class="game-cover">
+                        <img src="images/aiagent1.png" alt="游戏AI Agent">
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title">游戏AI Agent</h3>
+                        <p class="game-type">AI工具 / 游戏设计 / 智能顾问</p>
+                        <p class="game-desc">专业的游戏AI设计顾问，提供剧情生成、代码辅助和性能预估服务</p>
+                        <ul class="game-highlights">
+                            <li>智能对话系统，专业游戏设计咨询</li>
+                            <li>代码生成功能，快速原型开发</li>
+                            <li>性能预估模块，优化游戏性能</li>
+                            <li>支持知识库加载，个性化定制</li>
+                        </ul>
+                        <a href="#" class="btn btn-outline">了解更多</a>
+                    </div>
+                </div>
+                <div class="game-card">
+                    <div class="game-cover">
+                        <img src="images/aiagent2.png" alt="游戏AI Agent">
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title">游戏AI Agent Pro</h3>
+                        <p class="game-type">高级AI工具 / 进阶功能</p>
+                        <p class="game-desc">增强版AI助手，提供更强大的游戏设计辅助功能</p>
+                        <ul class="game-highlights">
+                            <li>高级剧本生成引擎</li>
+                            <li>智能关卡设计工具</li>
+                            <li>角色关系图谱分析</li>
+                            <li>实时协作编辑功能</li>
+                        </ul>
+                        <a href="#" class="btn btn-outline">了解更多</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="literature" class="section">
+        <div class="section-container">
+            <h2 class="section-title">文学 / 文案创作</h2>
+            <div class="literature-list">
+                <div class="literature-item">
+                    <h3>长篇小说《青川一纸：解开父亲的执念密码》</h3>
+                    <div class="literature-tags">
+                        <span class="literature-tag">悬疑亲情</span>
+                        <span class="literature-tag">科学反迷信</span>
+                        <span class="literature-tag">民俗探案</span>
+                    </div>
+                    <p>完整四章，结构严谨，适合影视/游戏改编</p>
+                </div>
+                <div class="literature-item">
+                    <h3>现实小说《月映崇山》</h3>
+                    <div class="literature-tags">
+                        <span class="literature-tag">反拐卖</span>
+                        <span class="literature-tag">反迷信</span>
+                        <span class="literature-tag">基层民警</span>
+                    </div>
+                    <p>强情绪、强画面，可做互动叙事剧本</p>
+                    <a href="https://www.kdocs.cn/l/cmkn2R7l6X6s" target="_blank" class="btn btn-outline">阅读全文</a>
+                </div>
+                <div class="literature-item">
+                    <h3>诗歌《白凤游九州》</h3>
+                    <div class="literature-tags">
+                        <span class="literature-tag">家国情怀</span>
+                        <span class="literature-tag">意象优美</span>
+                    </div>
+                    <p>家国情怀，意象优美，可用于游戏世界观/主题曲文案</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="competition" class="section">
+        <div class="section-container">
+            <h2 class="section-title">竞赛项目成果</h2>
+            <div class="competition-card">
+                <h3>「诚」心「成」易 —— 电商平台真伪鉴别</h3>
+                <p class="competition-info">全国大学生电子商务 "三创" 挑战赛</p>
+                <div class="competition-role">队长、策划、主文案</div>
+                <p class="competition-desc">完整项目报告书（市场/产品/运营/财务/风险）</p>
+                <div class="competition-skills">
+                    <span class="tag">商业逻辑</span>
+                    <span class="tag">文档撰写</span>
+                    <span class="tag">团队管理</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="social" class="section">
+        <div class="section-container">
+            <h2 class="section-title">新媒体运营</h2>
+            <div class="social-grid">
+                <div class="social-stats-card">
+                    <img src="images/图片1.png" alt="视频数据概览">
+                    <div class="social-stats-info">
+                        <h4>数据概览</h4>
+                        <p>总播放量5万+，互动数据稳定增长</p>
+                    </div>
+                </div>
+                <div class="social-stats-card">
+                    <img src="images/图片2.png" alt="作品分析">
+                    <div class="social-stats-info">
+                        <h4>作品分析</h4>
+                        <p>爆款视频9.8万播放，获流量激励</p>
+                    </div>
+                </div>
+                <div class="social-card">
+                    <div class="social-icon">📺</div>
+                    <h3>B站：斯程菌 jun</h3>
+                    <p class="social-stats">总播放：5万+ | 爆款视频：9.8万播放</p>
+                    <div class="social-links">
+                        <a href="https://b23.tv/jOew11k" class="social-link" target="_blank">📱</a>
+                    </div>
+                </div>
+                <div class="social-card">
+                    <div class="social-icon">💻</div>
+                    <h3>GitHub</h3>
+                    <p class="social-stats">版本控制 | 项目迭代</p>
+                    <div class="social-links">
+                        <a href="https://github.com/diamoond698/-404-404work-room.git" class="social-link" target="_blank">🐙</a>
+                    </div>
+                </div>
+                <div class="social-card">
+                    <div class="social-icon">🌐</div>
+                    <h3>个人官网</h3>
+                    <p class="social-stats">作品展示 | 游戏体验</p>
+                    <div class="social-links">
+                        <a href="https://404workroom-1420076748.cos-website.ap-nanjing.myqcloud.com/index.html" class="social-link" target="_blank">🌍</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="section contact-section">
+        <div class="section-container">
+            <h2 class="section-title">联系方式</h2>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <div class="contact-icon">📞</div>
+                    <h3>电话</h3>
+                    <p>15288487348</p>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">📧</div>
+                    <h3>邮箱</h3>
+                    <p><a href="mailto:1247235323@qq.com">1247235323@qq.com</a></p>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">🌐</div>
+                    <h3>官网</h3>
+                    <p><a href="https://404workroom-1420076748.cos-website.ap-nanjing.myqcloud.com/index.html">404workroom</a></p>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">🎮</div>
+                    <h3>游戏体验</h3>
+                    <p><a href="https://27hrmzcgkukiwwqb9ogwrh.streamlit.app/" target="_blank">断联 404</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="#hero">首页</a>
+            <a href="#skills">核心能力</a>
+            <a href="#games">游戏作品</a>
+            <a href="#literature">文学创作</a>
+            <a href="#contact">联系方式</a>
+        </div>
+        <p>&copy; 2024 赵思城 | 404 Work Room</p>
+    </footer>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const loader = document.getElementById('loader');
+            const percentageEl = document.getElementById('loader-percentage');
+            const progressEl = document.getElementById('loader-progress');
+            
+            let progress = 0;
+            const duration = 2500;
+            const interval = 30;
+            const increment = 100 / (duration / interval);
+            
+            const progressInterval = setInterval(() => {
+                progress += increment;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    setTimeout(() => {
+                        loader.classList.add('hidden');
+                    }, 300);
+                }
+                
+                percentageEl.textContent = Math.round(progress) + '%';
+                progressEl.style.width = progress + '%';
+            }, interval);
+
+            createParticles();
+        });
+
+        function createParticles() {
+            const container = document.getElementById('particle-container');
+            
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.width = (2 + Math.random() * 3) + 'px';
+                particle.style.height = particle.style.width;
+                container.appendChild(particle);
+            }
+
+            for (let i = 0; i < 15; i++) {
+                const lineParticle = document.createElement('div');
+                lineParticle.className = 'line-particle';
+                lineParticle.style.left = Math.random() * 100 + '%';
+                lineParticle.style.animationDuration = (8 + Math.random() * 6) + 's';
+                lineParticle.style.animationDelay = Math.random() * 12 + 's';
+                container.appendChild(lineParticle);
+            }
+        }
+
+        function createSakura() {
+            const sakura = document.createElement('div');
+            sakura.className = 'sakura';
+            sakura.style.left = Math.random() * 100 + 'vw';
+            sakura.style.animationDuration = (8 + Math.random() * 7) + 's';
+            sakura.style.animationDelay = Math.random() * 5 + 's';
+            sakura.style.transform = `rotate(${Math.random() * 360}deg)`;
+            document.body.appendChild(sakura);
+            
+            setTimeout(() => {
+                sakura.remove();
+            }, 15000);
+        }
+
+        setTimeout(() => {
+            for (let i = 0; i < 15; i++) {
+                setTimeout(createSakura, i * 1000);
+            }
+            setInterval(createSakura, 2000);
+        }, 2500);
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
